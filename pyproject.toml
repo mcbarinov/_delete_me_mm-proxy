@@ -1,10 +1,10 @@
 [project]
 name = "app"
-version = "0.0.1"
+version = "0.1.0"
 description = "bla bla"
 requires-python = ">=3.11"
 dependencies = [
-    "mm-base1==0.1.0",
+    "mm-base1==0.1.1",
 ]
 [project.optional-dependencies]
 dev = [
@@ -12,9 +12,9 @@ dev = [
     "twine~=5.1.0",
     "pytest~=8.3.2",
     "pytest-xdist~=3.6.1",
-    "pytest-httpserver~=1.0.8",
+    "pytest-httpserver~=1.1.0",
     "coverage~=7.6.0",
-    "ruff~=0.5.5",
+    "ruff~=0.6.1",
     "pip-audit~=2.7.2",
     "bandit~=1.7.5",
     "mypy~=1.11.0",

@@ -11,8 +11,8 @@ clean:
 
 pip-compile:
     rm -f requirements.txt requirements-dev.txt
-    uv pip compile -o requirements.txt pyproject.toml
-    uv pip compile -o requirements-dev.txt --extra=dev pyproject.toml
+    uv pip compile --refresh -o requirements.txt pyproject.toml
+    uv pip compile --refresh -o requirements-dev.txt --extra=dev pyproject.toml
 
 pip-sync:
     uv pip sync requirements-dev.txt
