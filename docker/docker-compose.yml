@@ -1,6 +1,6 @@
 services:
   app:
-    image: mm-base1-demo:latest
+    image: proxy-checker.py:latest
     environment:
       - APP_NAME=${APP_NAME}
       - DATABASE_URL=mongodb://root:secret@db/app?authSource=admin
