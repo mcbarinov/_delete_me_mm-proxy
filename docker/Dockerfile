@@ -1,15 +1,15 @@
 # syntax=docker/dockerfile:1.9
-FROM python:3.12.6 AS builder
+FROM python:3.13.0 AS builder
 
 SHELL ["/bin/sh", "-exc"]
 WORKDIR /project
 
 # Setup uv
-COPY --from=ghcr.io/astral-sh/uv:0.4.9 /uv /usr/local/bin/
+COPY --from=ghcr.io/astral-sh/uv:0.5.2 /uv /usr/local/bin/
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
     UV_PYTHON_DOWNLOADS=never \
-    UV_PYTHON=python3.12 \
+    UV_PYTHON=python3.13 \
     UV_PROJECT_ENVIRONMENT=/app
 
 # Create a virtual environment
@@ -27,7 +27,7 @@ RUN --mount=type=cache,target=/root/.cache/uv uv build --wheel -o /dist /project
 RUN --mount=type=cache,target=/root/.cache uv pip install --python=$UV_PROJECT_ENVIRONMENT --no-deps /dist/*.whl
 
 
-FROM python:3.12.6-slim
+FROM python:3.13.0-slim
 ENV PATH="/app/bin:$PATH"
 
 RUN <<EOT
