@@ -38,7 +38,7 @@ def init(app: App) -> APIRouter:
 
     @router.get("/proxies/live")
     def get_live_proxies(sources: str | None = None, format_: Annotated[str, Query(alias="format")] = "json"):
-        query: dict[str, object] = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-5)}}
+        query: dict[str, object] = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-15)}}
         if sources:
             query = {"source": {"$in": sources.split(",")}}
         proxies = app.db.proxy.find(query)
