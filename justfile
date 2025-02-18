@@ -42,11 +42,13 @@ docker-compose: docker-build
 	cd docker && docker compose up --build
 
 docker-upload: docker-build
-	docker tag {{project_name}}:{{version}} {{project_image}}:{{version}}
-	docker push {{project_image}}:{{version}}
+    git diff-index --quiet HEAD
+    docker tag {{project_name}}:{{version}} {{project_image}}:{{version}}
+    docker push {{project_image}}:{{version}}
 
 publish: docker-upload
 	cd ansible;	ansible-playbook -i hosts.yml --extra-vars="app_version={{version}}" -t publish playbook.yml
+	git tag -a 'v{{version}}' -m 'v{{version}}' && git push origin v{{version}}
 
 dev:
 	uv run uvicorn --reload --port 3000 --log-level warning app.main:server

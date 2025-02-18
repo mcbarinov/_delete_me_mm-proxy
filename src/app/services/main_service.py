@@ -104,6 +104,15 @@ class MainService(AppService):
             query["source"] = {"$in": sources}
         return self.db.proxy.find(query, "url")
 
+    def calc_stats(self) -> dict[str, int]:
+        return {
+            "all": self.db.proxy.count({}),
+            "ok": self.db.proxy.count({"status": Status.OK}),
+            "live": self.db.proxy.count(
+                {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
+            ),
+        }
+
 
 def parse_ipv4_addresses(data: str) -> set[str]:
     result = set()
