@@ -1,10 +1,10 @@
 [project]
 name = "app"
-version = "0.1.5"
+version = "0.2.0"
 description = "a proxy checker app"
 requires-python = ">=3.13"
 dependencies = [
-    "mm-base1==0.1.13",
+    "mm-base1==0.2.0",
 ]
 
 [build-system]
@@ -18,7 +18,7 @@ dev-dependencies = [
     "pytest-httpserver~=1.1.1",
     "ruff~=0.9.6",
     "pip-audit~=2.8.0",
-    "bandit~=1.8.2",
+    "bandit~=1.8.3",
     "mypy~=1.15.0",
 ]
 

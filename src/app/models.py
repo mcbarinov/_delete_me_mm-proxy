@@ -4,7 +4,8 @@ from datetime import datetime
 from enum import Enum, unique
 from urllib.parse import urlparse
 
-from mm_mongo import MongoModel, ObjectIdStr
+from bson import ObjectId
+from mm_mongo import MongoModel
 from mm_std import utc_delta, utc_now
 from pydantic import BaseModel, Field
 
@@ -15,7 +16,7 @@ class Protocol(str, Enum):
     SOCKS5 = "SOCKS5"
 
 
-class Source(MongoModel):
+class Source(MongoModel[str]):
     class Default(BaseModel):
         protocol: Protocol
         username: str
@@ -29,7 +30,6 @@ class Source(MongoModel):
     __collection__ = "source"
     __indexes__ = ["created_at", "checked_at"]
 
-    id: str = Field(..., alias="_id")
     default: Default | None = None
     link: str | None = None
     items: list[str] = Field(default_factory=list)  # list of proxy urls or hosts
@@ -44,7 +44,7 @@ class Source(MongoModel):
         if not link:
             link = None
 
-        return Source(_id=id_, link=link)
+        return Source(id=id_, link=link)
 
 
 @unique
@@ -54,11 +54,10 @@ class Status(str, Enum):
     DOWN = "DOWN"
 
 
-class Proxy(MongoModel):
+class Proxy(MongoModel[ObjectId]):
     __collection__ = "proxy"
     __indexes__ = ["!ip", "source", "protocol", "status", "created_at", "checked_at", "last_ok_at"]
 
-    id: ObjectIdStr | None = Field(None, alias="_id")
     source: str
     url: str
     ip: str  # must be uniq, ipv4 only
@@ -88,4 +87,4 @@ class Proxy(MongoModel):
     def new(cls, source: str, url: str) -> Proxy:
         ip = urlparse(url).hostname
         protocol = Protocol.HTTP if url.startswith("http") else Protocol.SOCKS5
-        return Proxy(source=source, url=url, ip=ip, protocol=protocol)
+        return Proxy(id=ObjectId(), source=source, url=url, ip=ip, protocol=protocol)

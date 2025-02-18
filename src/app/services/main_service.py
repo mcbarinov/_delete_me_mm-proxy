@@ -1,6 +1,7 @@
 import contextlib
 import re
 
+from bson import ObjectId
 from mm_std import ConcurrentTasks, hr, synchronized, utc_delta, utc_now
 from pymongo.errors import BulkWriteError
 
@@ -36,11 +37,11 @@ class MainService(AppService):
                 self.db.proxy.insert_many(proxies, ordered=False)
 
         updated = {"proxies_count": self.db.proxy.count({"source": pk}), "checked_at": utc_now()}
-        self.db.source.set_by_id(pk, updated)
+        self.db.source.set(pk, updated)
 
         return len(proxies)
 
-    def check_proxy(self, pk: str) -> dict[str, object]:
+    def check_proxy(self, pk: ObjectId) -> dict[str, object]:
         proxy = self.db.proxy.get(pk)
         res = hr("https://httpbin.org/ip", proxy=proxy.url, timeout=5)
         status = Status.OK if res.json and res.json.get("origin") == proxy.ip else Status.DOWN
@@ -52,7 +53,7 @@ class MainService(AppService):
 
         updated_proxy = self.db.proxy.set_and_get(pk, updated)
         if updated_proxy.is_time_to_delete():
-            self.db.proxy.delete_by_id(pk)
+            self.db.proxy.delete(pk)
             updated["deleted"] = True
 
         return updated

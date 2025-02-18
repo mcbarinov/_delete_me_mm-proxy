@@ -1,5 +1,6 @@
 from typing import Annotated
 
+from bson import ObjectId
 from fastapi import APIRouter, Query
 from mm_std import utc_delta
 from starlette.responses import PlainTextResponse, Response
@@ -22,7 +23,7 @@ def init(app: App) -> APIRouter:
     @router.delete("/sources/{pk}")
     def delete_source(pk: str):
         app.db.proxy.delete_many({"source": pk})
-        return app.db.source.delete_by_id(pk)
+        return app.db.source.delete(pk)
 
     @router.post("/sources/{pk}/check")
     def check_source(pk: str):
@@ -30,7 +31,7 @@ def init(app: App) -> APIRouter:
 
     @router.post("/sources/{pk}/clear-default")
     def clear_default(pk: str):
-        return app.db.source.set_by_id(pk, {"default": None})
+        return app.db.source.set(pk, {"default": None})
 
     @router.post("/sources/{pk}/delete-proxies")
     def delete_proxies_for_source(pk: str):
@@ -49,15 +50,15 @@ def init(app: App) -> APIRouter:
         return {"proxies": [p.url for p in proxies]}
 
     @router.get("/proxies/{pk}")
-    def get_proxy(pk: str):
+    def get_proxy(pk: ObjectId):
         return app.db.proxy.get(pk)
 
     @router.get("/proxies/{pk}/url", response_class=PlainTextResponse)
-    def get_proxy_url(pk: str):
+    def get_proxy_url(pk: ObjectId):
         return app.db.proxy.get(pk).url
 
     @router.post("/proxies/{pk}/check")
-    def check_proxy(pk: str):
+    def check_proxy(pk: ObjectId):
         return app.main_service.check_proxy(pk)
 
     return router

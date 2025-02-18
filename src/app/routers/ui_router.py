@@ -92,11 +92,11 @@ def init(app: App, templates: Templates) -> APIRouter:
     @router.post("/set-items/{pk}")
     def set_items(pk: str, form_data=depends_form):
         form = SetItemsForm(form_data)
-        return app.db.source.set_by_id(pk, {"items": form.parse_items()})
+        return app.db.source.set(pk, {"items": form.parse_items()})
 
     @router.post("/set-default/{pk}")
     def set_default(pk: str, form_data=depends_form):
         form = SetDefaultForm(form_data)
-        return app.db.source.set_by_id(pk, {"default": form.parse().dict()})
+        return app.db.source.set(pk, {"default": form.parse().dict()})
 
     return router
