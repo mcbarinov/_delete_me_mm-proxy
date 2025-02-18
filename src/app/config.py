@@ -1,5 +1,5 @@
 from mm_base1.config import BaseAppConfig
-from mm_base1.services.dconfig_service import DConfigStorage
+from mm_base1.services.dconfig_service import DC, DConfigStorage
 from mm_base1.services.dvalue_service import DValueStorage
 
 
@@ -9,7 +9,7 @@ class AppConfig(BaseAppConfig):
 
 
 class DConfigSettings(DConfigStorage):
-    pass
+    live_last_ok_minutes = DC(15, "live proxies only if they checked less than this minutes ago")
 
 
 class DValueSettings(DValueStorage):

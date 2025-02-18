@@ -62,7 +62,12 @@ def init(app: App, templates: Templates) -> APIRouter:
         form = CreateSourceForm()
         sources = app.db.source.find({}, "_id")
         count_live_proxies = app.main_service.count_live_proxies()
-        return templates.render(req, "sources.j2", {"form": form, "sources": sources, "count_live_proxies": count_live_proxies})
+        count_ok_proxies = app.main_service.count_ok_proxies()
+        return templates.render(
+            req,
+            "sources.j2",
+            {"form": form, "sources": sources, "count_live_proxies": count_live_proxies, "count_ok_proxies": count_ok_proxies},
+        )
 
     @router.get("/set-items/{pk}", response_class=HTMLResponse)
     def set_items_page(req: Request, pk: str):

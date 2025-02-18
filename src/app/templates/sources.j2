@@ -13,6 +13,7 @@
       <th>items</th>
       <th>default</th>
       <th>proxies</th>
+      <th>ok</th>
       <th>live</th>
       <th>checked_at</th>
       <th>actions</th>
@@ -26,6 +27,7 @@
         <td>{{ s.items | length }}</td>
         <td>{{ 'default' if s.default }}</td>
         <td>{{ s.proxies_count }}</td>
+        <td>{{ count_ok_proxies[s.id] }}</td>
         <td>{{ count_live_proxies[s.id] }}</td>
         <td>{{ s.checked_at | dt }}</td>
         <td>{{ dropdown([

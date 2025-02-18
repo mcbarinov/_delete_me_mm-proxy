@@ -83,8 +83,26 @@ class MainService(AppService):
     def count_live_proxies(self) -> dict[str, int]:
         result = {}
         for source in self.db.source.find({}, "_id"):
-            result[source.id] = self.db.proxy.count({"source": source.id, "status": Status.OK})
+            query = {
+                "source": source.id,
+                "status": Status.OK,
+                "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)},
+            }
+            result[source.id] = self.db.proxy.count(query)
         return result
+
+    def count_ok_proxies(self) -> dict[str, int]:
+        result = {}
+        for source in self.db.source.find({}, "_id"):
+            query = {"source": source.id, "status": Status.OK}
+            result[source.id] = self.db.proxy.count(query)
+        return result
+
+    def get_live_proxies(self, sources: list[str] | None) -> list[Proxy]:
+        query = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
+        if sources:
+            query["source"] = {"$in": sources}
+        return self.db.proxy.find(query, "url")
 
 
 def parse_ipv4_addresses(data: str) -> set[str]:

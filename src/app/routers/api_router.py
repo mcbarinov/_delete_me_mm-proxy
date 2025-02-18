@@ -2,11 +2,9 @@ from typing import Annotated
 
 from bson import ObjectId
 from fastapi import APIRouter, Query
-from mm_std import utc_delta
 from starlette.responses import PlainTextResponse, Response
 
 from app.app import App
-from app.models import Status
 
 
 def init(app: App) -> APIRouter:
@@ -39,11 +37,7 @@ def init(app: App) -> APIRouter:
 
     @router.get("/proxies/live")
     def get_live_proxies(sources: str | None = None, format_: Annotated[str, Query(alias="format")] = "json"):
-        query: dict[str, object] = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-15)}}
-        if sources:
-            query = {"source": {"$in": sources.split(",")}}
-        proxies = app.db.proxy.find(query)
-
+        proxies = app.main_service.get_live_proxies(sources.split(",") if sources else None)
         if format_ == "text":
             return Response(content="\n".join([p.url for p in proxies]), media_type="text/plain")
 
