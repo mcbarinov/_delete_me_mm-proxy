@@ -26,9 +26,9 @@
         <td>{{ s.link | empty }}</td>
         <td>{{ s.items | length }}</td>
         <td>{{ 'default' if s.default }}</td>
-        <td>{{ s.proxies_count }}</td>
-        <td>{{ count_ok_proxies[s.id] }}</td>
-        <td>{{ count_live_proxies[s.id] }}</td>
+        <td>{{ stats.sources[s.id].all }}</td>
+        <td>{{ stats.sources[s.id].ok }}</td>
+        <td>{{ stats.sources[s.id].live }}</td>
         <td>{{ s.checked_at | dt }}</td>
         <td>{{ dropdown([
         ("/set-items/"+s.id, "set items"),

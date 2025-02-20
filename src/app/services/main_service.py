@@ -3,10 +3,21 @@ import re
 
 from bson import ObjectId
 from mm_std import ConcurrentTasks, hr, synchronized, utc_delta, utc_now
+from pydantic import BaseModel
 from pymongo.errors import BulkWriteError
 
 from app.models import Proxy, Status
 from app.services.base import AppService, AppServiceParams
+
+
+class Stats(BaseModel):
+    class Count(BaseModel):
+        all: int
+        ok: int
+        live: int
+
+    all: Count
+    sources: dict[str, Count]  # source_id -> Count
 
 
 class MainService(AppService):
@@ -36,8 +47,7 @@ class MainService(AppService):
             with contextlib.suppress(BulkWriteError):
                 self.db.proxy.insert_many(proxies, ordered=False)
 
-        updated = {"proxies_count": self.db.proxy.count({"source": pk}), "checked_at": utc_now()}
-        self.db.source.set(pk, updated)
+        self.db.source.set(pk, {"checked_at": utc_now()})
 
         return len(proxies)
 
@@ -80,38 +90,34 @@ class MainService(AppService):
             tasks.add_task(f"check_proxy_{p.id}", self.check_proxy, args=(p.id,))
         tasks.execute()
 
-    def count_live_proxies(self) -> dict[str, int]:
-        result = {}
-        for source in self.db.source.find({}, "_id"):
-            query = {
-                "source": source.id,
-                "status": Status.OK,
-                "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)},
-            }
-            result[source.id] = self.db.proxy.count(query)
-        return result
-
-    def count_ok_proxies(self) -> dict[str, int]:
-        result = {}
-        for source in self.db.source.find({}, "_id"):
-            query = {"source": source.id, "status": Status.OK}
-            result[source.id] = self.db.proxy.count(query)
-        return result
-
     def get_live_proxies(self, sources: list[str] | None) -> list[Proxy]:
         query = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
         if sources:
             query["source"] = {"$in": sources}
         return self.db.proxy.find(query, "url")
 
-    def calc_stats(self) -> dict[str, int]:
-        return {
-            "all": self.db.proxy.count({}),
-            "ok": self.db.proxy.count({"status": Status.OK}),
-            "live": self.db.proxy.count(
+    def calc_stats(self) -> Stats:
+        all_ = Stats.Count(
+            all=self.db.proxy.count({}),
+            ok=self.db.proxy.count({"status": Status.OK}),
+            live=self.db.proxy.count(
                 {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
             ),
-        }
+        )
+        sources = {}
+        for source in self.db.source.find({}, "_id"):
+            sources[source.id] = Stats.Count(
+                all=self.db.proxy.count({"source": source.id}),
+                ok=self.db.proxy.count({"source": source.id, "status": Status.OK}),
+                live=self.db.proxy.count(
+                    {
+                        "source": source.id,
+                        "status": Status.OK,
+                        "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)},
+                    }
+                ),
+            )
+        return Stats(all=all_, sources=sources)
 
 
 def parse_ipv4_addresses(data: str) -> set[str]:

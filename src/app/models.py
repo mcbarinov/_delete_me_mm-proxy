@@ -27,13 +27,12 @@ class Source(MongoModel[str]):
             schema = "socks5" if self.protocol == Protocol.SOCKS5 else "http"
             return f"{schema}://{self.username}:{self.password}@{ip}:{self.port}"
 
-    __collection__ = "source"
+    __collection__: str = "source"
     __indexes__ = ["created_at", "checked_at"]
 
     default: Default | None = None
     link: str | None = None
     items: list[str] = Field(default_factory=list)  # list of proxy urls or hosts
-    proxies_count: int = 0
     created_at: datetime = Field(default_factory=utc_now)
     checked_at: datetime | None = None
 
