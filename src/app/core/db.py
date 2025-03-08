@@ -5,9 +5,10 @@ from enum import Enum, unique
 from urllib.parse import urlparse
 
 from bson import ObjectId
-from mm_mongo import MongoModel
+from mm_base5 import BaseDb
+from mm_mongo import MongoCollection, MongoModel
 from mm_std import utc_delta, utc_now
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 @unique
@@ -27,7 +28,7 @@ class Source(MongoModel[str]):
             schema = "socks5" if self.protocol == Protocol.SOCKS5 else "http"
             return f"{schema}://{self.username}:{self.password}@{ip}:{self.port}"
 
-    __collection__: str = "source"
+    __collection__: str = "sources"
     __indexes__ = ["created_at", "checked_at"]
 
     default: Default | None = None
@@ -36,14 +37,12 @@ class Source(MongoModel[str]):
     created_at: datetime = Field(default_factory=utc_now)
     checked_at: datetime | None = None
 
-    @classmethod
-    def new(cls, id_: str, link: str | None) -> Source:
-        if link is not None:
-            link = link.strip()
-        if not link:
-            link = None
-
-        return Source(id=id_, link=link)
+    @field_validator("link", mode="after")
+    def link_validator(cls, v: str | None) -> str | None:
+        if isinstance(v, str):
+            v = v.strip()
+            return v if v else None
+        return v
 
 
 @unique
@@ -54,7 +53,7 @@ class Status(str, Enum):
 
 
 class Proxy(MongoModel[ObjectId]):
-    __collection__ = "proxy"
+    __collection__ = "proxies"
     __indexes__ = ["!ip", "source", "protocol", "status", "created_at", "checked_at", "last_ok_at"]
 
     source: str
@@ -87,3 +86,8 @@ class Proxy(MongoModel[ObjectId]):
         ip = urlparse(url).hostname
         protocol = Protocol.HTTP if url.startswith("http") else Protocol.SOCKS5
         return Proxy(id=ObjectId(), source=source, url=url, ip=ip, protocol=protocol)
+
+
+class Db(BaseDb):
+    source: MongoCollection[str, Source]
+    proxy: MongoCollection[ObjectId, Proxy]

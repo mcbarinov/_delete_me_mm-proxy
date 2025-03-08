@@ -1,10 +1,10 @@
 [project]
 name = "app"
-version = "0.2.2"
-description = "a proxy checker app"
+version = "0.3.0"
+description = ""
 requires-python = ">=3.13"
 dependencies = [
-    "mm-base1==0.2.0",
+    "mm-base5~=0.0.5",
 ]
 
 [build-system]
@@ -13,10 +13,10 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = [
-    "pytest~=8.3.4",
+    "pytest~=8.3.5",
     "pytest-xdist~=3.6.1",
-    "pytest-httpserver~=1.1.1",
-    "ruff~=0.9.6",
+    "pytest-httpserver~=1.1.2",
+    "ruff~=0.9.10",
     "pip-audit~=2.8.0",
     "bandit~=1.8.3",
     "mypy~=1.15.0",
@@ -28,12 +28,6 @@ implicit_reexport = true
 warn_no_return = false
 strict = true
 plugins = "pydantic.mypy"
-[[tool.mypy.overrides]]
-module = ["wtforms.*", "telebot.types.*", "telebot.util.*"]
-ignore_missing_imports = true
-[[tool.mypy.overrides]]
-module = ["app.routers.*"]
-disable_error_code = ["no-untyped-def"]
 
 [tool.ruff]
 line-length = 130
@@ -64,14 +58,16 @@ ignore = [
     "RUF012", # ruff: mutable-class-default
     "COM812", # it's used in ruff formatter
 ]
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["id"]
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = ["field_validator"]
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["ANN", "S"]
-"src/app/routers/*.py" = ["ANN"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
 
 [tool.bandit]
 exclude_dirs = ["tests"]

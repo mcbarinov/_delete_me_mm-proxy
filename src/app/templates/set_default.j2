@@ -1,8 +1,0 @@
-{% extends "inc/base.j2" %}
-{% block content %}
-  <div class="menu">
-    <h3>set default / {{ source.id }}</h3>
-  </div>
-
-  {{ simple_form(form, submit="set", method="post", action="/set-default/"+source.id) }}
-{% endblock %}

@@ -1,11 +1,12 @@
-from mm_base1.jinja import Templates
-from mm_base1.server import Server
+from fastapi import FastAPI
+from mm_base5 import init_server
 
-from app.app import App
-from app.jinja import custom_jinja
-from app.routers import init_routers
-from app.telegram import Telegram
+from app import settings
+from app.core.core import Core
+from app.server.jinja import custom_jinja
 
-app = App()
-templates = Templates(app, custom_jinja)
-server = Server(app, Telegram(app), init_routers(app, templates), templates).get_server()
+
+def start() -> FastAPI:
+    core = Core(settings.core_config)
+    core.startup()
+    return init_server(core, settings.server_config, custom_jinja, settings.get_router())

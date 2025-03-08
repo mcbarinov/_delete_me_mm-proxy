@@ -1,0 +1,99 @@
+{% extends "inc/base.j2" %}
+{% block content %}
+
+  <nav>
+    <ul>
+      <li><h3>sources</h3></li>
+      <li>
+        <button onclick="toggleModal(event)" data-target="modal-create" class="outline">create</button>
+      </li>
+    </ul>
+    <dialog id="modal-create">
+      <article>
+        <form method="POST">
+          <fieldset role="group">
+            <input type="text" name="id" placeholder="id" required>
+            <input type="text" name="link" placeholder="link">
+            <input type="submit" value="create">
+          </fieldset>
+        </form>
+      </article>
+    </dialog>
+  </nav>
+
+
+  <table>
+    <thead>
+    <tr>
+      <th>id</th>
+      <th>link</th>
+      <th>items</th>
+      <th>default</th>
+      <th>proxies</th>
+      <th>ok</th>
+      <th>live</th>
+      <th>checked_at</th>
+      <th>actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for s in sources %}
+      <tr>
+        <td>{{ s.id }}</td>
+        <td>{{ s.link | empty }}</td>
+        <td>{{ s.items | length }}</td>
+        <td>{{ 'default' if s.default }}</td>
+        <td>{{ stats.sources[s.id].all }}</td>
+        <td>{{ stats.sources[s.id].ok }}</td>
+        <td>{{ stats.sources[s.id].live }}</td>
+        <td>{{ s.checked_at | dt }}</td>
+        <td>
+          <details class="dropdown">
+            <summary>actions</summary>
+            <ul>
+              <li><a onclick="toggleModal(event)" data-target="modal-items-{{ s.id }}">items</a></li>
+              <li><a onclick="toggleModal(event)" data-target="modal-default-{{ s.id }}">default</a></li>
+              <li><a href="/api-delete/sources/{{ s.id }}/proxies" {{ confirm }}>delete proxies</a></li>
+              <li><a href="/api-post/sources/{{ s.id }}/check">check</a></li>
+              <li><a href="/api-delete/sources/{{ s.id }}" {{ confirm }}>delete</a></li>
+              <li><a href="/api/sources/{{ s.id }}">view</a></li>
+            </ul>
+          </details>
+          <dialog id="modal-items-{{ s.id }}">
+            <article>
+              <header>set items / {{ s.id }}</header>
+              <form method="POST" action="/sources/{{ s.id }}/items">
+                <textarea name="items" rows="10">{{ s.items | join("\n") }}</textarea>
+                <input type="submit" value="save">
+              </form>
+            </article>
+          </dialog>
+          <dialog id="modal-default-{{ s.id }}">
+            <article>
+              <header>set default / {{ s.id }}</header>
+              <form method="POST" action="/sources/{{ s.id }}/default">
+                <select name="protocol" required>
+                  <option value="" disabled selected>protocol...</option>
+                  <option value="HTTP" {{ "selected" if s.default.protocol == "HTTP" }}>HTTP</option>
+                  <option value="SOCKS5" {{ "selected" if s.default.protocol == "SOCKS5" }}>SOCKS5</option>
+                </select>
+                <input type="text" name="username" placeholder="username" value="{{ s.default.username }}">
+                <input type="text" name="password" placeholder="password" value="{{ s.default.password }}">
+                <input type="number" name="port" placeholder="port" value="{{ s.default.port }}" required>
+                <input type="submit" value="save">
+              </form>
+              <footer>
+                <a href="/api-delete/sources/{{ s.id }}/default" {{ confirm }}>clear default</a>
+              </footer>
+            </article>
+          </dialog>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+
+
+
+{% endblock %}

@@ -1,11 +1,9 @@
 {% extends "inc/base.j2" %}
 {% block content %}
-  <div class="menu">
-    <h3>proxies / {{ proxies | length }}</h3>
-  </div>
-  <br>
 
-  <table class="table table-sm sortable">
+  <h3>proxies / {{ proxies | length }}</h3>
+
+  <table class="sortable">
     <thead>
     <tr>
       <th>ip</th>

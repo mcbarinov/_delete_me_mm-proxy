@@ -1,9 +1,9 @@
 servers:
   hosts:
-    "mm-base1-demo.example.net":
-      app_name: mm-base1-demo
-      domain: mm-base1-demo.example.net
-      app_image: ghcr.io/xxx/mm-base1-demo
+    "mm-base5-demo.example.net":
+      app_name: mm-base5-demo
+      domain: mm-base5-demo.example.net
+      app_image: ghcr.io/xxx/mm-base5-demo
       db_password: secret
       access_token: secret
       letsencrypt_email: mail@spam.org

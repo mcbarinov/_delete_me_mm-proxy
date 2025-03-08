@@ -35,23 +35,21 @@ docker-lint:
     hadolint docker/Dockerfile
 
 docker-build:
-	docker build --platform {{docker_build_platform}} -t {{project_name}}:{{version}} --file docker/Dockerfile .
+	docker build --build-arg python_version=${PYTHON_VERSION} --build-arg uv_version=${UV_VERSION} --platform {{docker_build_platform}} -t {{project_name}}:{{version}} --file docker/Dockerfile .
 	docker tag {{project_name}}:{{version}} {{project_name}}:latest
 
-docker-compose: docker-build
+docker-compose: 
 	cd docker && docker compose up --build
 
 docker-upload: docker-build
-    git diff-index --quiet HEAD
-    docker tag {{project_name}}:{{version}} {{project_image}}:{{version}}
-    docker push {{project_image}}:{{version}}
+	docker tag {{project_name}}:{{version}} {{project_image}}:{{version}}
+	docker push {{project_image}}:{{version}}
 
 publish: docker-upload
 	cd ansible;	ansible-playbook -i hosts.yml --extra-vars="app_version={{version}}" -t publish playbook.yml
-	git tag -a 'v{{version}}' -m 'v{{version}}' && git push origin v{{version}}
 
 dev:
-	uv run uvicorn --reload --port 3000 --log-level warning app.main:server
+    uv run uvicorn --reload --port 3000 --log-level=warning --factory app.main:start
 
-gunicorn:
-	uv run gunicorn -b 0.0.0.0:3000 --timeout 999 --threads 12 -k uvicorn.workers.UvicornWorker app.main:server
+uvicorn:
+    uvicorn --port 3000 --log-level=warning --factory app.main:start
