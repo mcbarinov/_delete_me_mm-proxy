@@ -84,7 +84,7 @@ def init(app: App, templates: Templates) -> APIRouter:
 
     @router.get("/proxies", response_class=HTMLResponse)
     def proxies_page(req: Request):
-        proxies = app.db.proxy.find({}, "ipv4")
+        proxies = app.db.proxy.find({}, "ip")
         return templates.render(req, "proxies.j2", {"proxies": proxies})
 
     # actions
