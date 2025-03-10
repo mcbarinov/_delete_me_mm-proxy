@@ -26,10 +26,11 @@ wheels = [
 
 [[package]]
 name = "app"
-version = "0.3.0"
+version = "0.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "mm-base5" },
+    { name = "mm-std" },
 ]
 
 [package.dev-dependencies]
@@ -44,7 +45,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "mm-base5", specifier = "~=0.0.5" }]
+requires-dist = [
+    { name = "mm-base5", specifier = "~=0.0.5" },
+    { name = "mm-std", specifier = ">=0.3.6" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -546,7 +550,7 @@ wheels = [
 
 [[package]]
 name = "mm-std"
-version = "0.3.5"
+version = "0.3.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -558,7 +562,7 @@ dependencies = [
     { name = "tomlkit" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/70/fcd121caf06b3a7871c1dd40b2d330c732eb2dc92d93557b36761437d41e/mm_std-0.3.5-py3-none-any.whl", hash = "sha256:b56ba1a26649c3f9f81644114be9403cabdba45f29cdae870cda55ea4f9694b0", size = 15288 },
+    { url = "https://files.pythonhosted.org/packages/4c/ce/9e16e12590ce3ed88186223237a1cc554b3016ffe325f1642036dcae3acb/mm_std-0.3.6-py3-none-any.whl", hash = "sha256:495c8fffd32977acf3c78e1b5daf3fbacb20809321001091b16f6f0aca9c5de9", size = 15823 },
 ]
 
 [[package]]

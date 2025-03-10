@@ -3,6 +3,29 @@
 
   <h3>proxies / {{ proxies | length }}</h3>
 
+  <form method="GET">
+    <fieldset role="group">
+      <select name="source">
+        <option value="">source...</option>
+        {% for s in sources %}
+          <option value="{{ s }}" {{ "selected" if s == query.source }}>{{ s }}</option>{% endfor %}
+      </select>
+      <select name="status">
+        <option value="">status...</option>
+        {% for s in statuses %}
+          <option value="{{ s }}" {{ "selected" if s == query.status }}>{{ s }}</option>
+        {% endfor %}
+      </select>
+      <select name="protocol">
+        <option value="">protocol...</option>
+        {% for p in protocols %}
+          <option value="{{ p }}" {{ "selected" if p == query.protocol }}>{{ p }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" value="filter" class="outline">
+    </fieldset>
+  </form>
+
   <table class="sortable">
     <thead>
     <tr>

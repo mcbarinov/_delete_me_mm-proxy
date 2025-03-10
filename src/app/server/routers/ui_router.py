@@ -1,12 +1,13 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Form
+from fastapi.params import Query
 from mm_base5 import RenderDep, redirect
-from mm_std import str_to_list
+from mm_std import replace_empty_dict_values, str_to_list
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse, RedirectResponse
 
-from app.core.db import Protocol, Source
+from app.core.db import Protocol, Source, Status
 from app.server.deps import CoreDep
 
 router = APIRouter(include_in_schema=False)
@@ -25,9 +26,19 @@ def sources_page(render: RenderDep, core: CoreDep) -> HTMLResponse:
 
 
 @router.get("/proxies")
-def proxies_page(render: RenderDep, core: CoreDep) -> HTMLResponse:
-    proxies = core.db.proxy.find({}, "ip")
-    return render.html("proxies.j2", proxies=proxies)
+def proxies_page(
+    render: RenderDep,
+    core: CoreDep,
+    source: Annotated[str | None, Query()] = None,
+    status: Annotated[str | None, Query()] = None,
+    protocol: Annotated[str | None, Query()] = None,
+) -> HTMLResponse:
+    query = replace_empty_dict_values({"source": source, "status": status, "protocol": protocol})
+    proxies = core.db.proxy.find(query, "ip")  # type: ignore[arg-type]
+    sources = [s.id for s in core.db.source.find({}, "_id")]
+    statuses = [s.value for s in list(Status)]
+    protocols = [p.value for p in list(Protocol)]
+    return render.html("proxies.j2", proxies=proxies, sources=sources, statuses=statuses, protocols=protocols, query=query)
 
 
 # ACTIONS
