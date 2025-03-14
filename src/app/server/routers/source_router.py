@@ -18,7 +18,7 @@ def check_source(core: CoreDep, id: str) -> int:
 
 
 @router.delete("/{id}/default")
-def delete_source_default(core: CoreDep, id: str) -> MongoUpdateResult[str]:
+def delete_source_default(core: CoreDep, id: str) -> MongoUpdateResult:
     return core.db.source.set(id, {"default": None})
 
 

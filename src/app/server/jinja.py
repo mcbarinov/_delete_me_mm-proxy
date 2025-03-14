@@ -10,12 +10,12 @@ def header_info(core: Core) -> Markup:
     info += f"<span title='all proxies'>{stats.all.all}</span> / "
     info += f"<span title='ok proxies'>{stats.all.ok}</span> / "
     info += f"<span title='live proxies'>{stats.all.live}</span>"
-    return Markup(info)  # nosec: B704
+    return Markup(info)  # noqa: S704
 
 
 def footer_info(_core: Core) -> Markup:
     info = ""
-    return Markup(info)  # nosec: B704
+    return Markup(info)  # noqa: S704
 
 
 custom_jinja = CustomJinja(

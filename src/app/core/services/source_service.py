@@ -24,7 +24,7 @@ class SourceService(AppService):
     def __init__(self, base_params: AppServiceParams) -> None:
         super().__init__(base_params)
 
-    def create(self, id: str, link: str | None = None) -> MongoInsertOneResult[str]:
+    def create(self, id: str, link: str | None = None) -> MongoInsertOneResult:
         return self.db.source.insert_one(Source(id=id, link=link))
 
     def delete(self, id: str) -> MongoDeleteResult:
