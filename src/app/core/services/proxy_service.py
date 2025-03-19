@@ -11,8 +11,13 @@ class ProxyService(AppService):
 
     def check(self, id: ObjectId) -> dict[str, object]:
         proxy = self.db.proxy.get(id)
-        res = hr("https://httpbin.org/ip", proxy=proxy.url, timeout=5)
-        status = Status.OK if res.json and res.json.get("origin") == proxy.ip else Status.DOWN
+
+        tasks = ConcurrentTasks()
+        tasks.add_task("httpbin", httpbin_check, args=(proxy.ip, proxy.url))
+        tasks.add_task("ipify", ipify_check, args=(proxy.ip, proxy.url))
+        tasks.execute()
+
+        status = Status.OK if tasks.result.get("httpbin", False) or tasks.result.get("ipify", False) else Status.DOWN
 
         updated = {"status": status, "checked_at": utc_now()}
         if status == Status.OK:
@@ -44,3 +49,13 @@ class ProxyService(AppService):
         if sources:
             query["source"] = {"$in": sources}
         return self.db.proxy.find(query, "url")
+
+
+def httpbin_check(ip: str, proxy: str) -> bool:
+    res = hr("https://httpbin.org/ip", proxy=proxy, timeout=5)
+    return res.json.get("origin", None) == ip  # type: ignore[no-any-return]
+
+
+def ipify_check(ip: str, proxy: str) -> bool:
+    res = hr("https://api.ipify.org/?format=json", proxy=proxy, timeout=5)
+    return res.json.get("ip", None) == ip  # type: ignore[no-any-return]
