@@ -2,7 +2,7 @@ import contextlib
 import re
 
 from mm_mongo import MongoDeleteResult, MongoInsertOneResult
-from mm_std import hr, synchronized, utc_delta, utc_now
+from mm_std import ahr, async_synchronized, utc_delta, utc_now
 from pydantic import BaseModel
 from pymongo.errors import BulkWriteError
 
@@ -24,27 +24,27 @@ class SourceService(AppService):
     def __init__(self, base_params: AppServiceParams) -> None:
         super().__init__(base_params)
 
-    def create(self, id: str, link: str | None = None) -> MongoInsertOneResult:
-        return self.db.source.insert_one(Source(id=id, link=link))
+    async def create(self, id: str, link: str | None = None) -> MongoInsertOneResult:
+        return await self.db.source.insert_one(Source(id=id, link=link))
 
-    def delete(self, id: str) -> MongoDeleteResult:
-        self.db.proxy.delete_many({"source": id})
-        return self.db.source.delete(id)
+    async def delete(self, id: str) -> MongoDeleteResult:
+        await self.db.proxy.delete_many({"source": id})
+        return await self.db.source.delete(id)
 
-    def calc_stats(self) -> Stats:
+    async def calc_stats(self) -> Stats:
         all_ = Stats.Count(
-            all=self.db.proxy.count({}),
-            ok=self.db.proxy.count({"status": Status.OK}),
-            live=self.db.proxy.count(
+            all=await self.db.proxy.count({}),
+            ok=await self.db.proxy.count({"status": Status.OK}),
+            live=await self.db.proxy.count(
                 {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
             ),
         )
         sources = {}
-        for source in self.db.source.find({}, "_id"):
+        for source in await self.db.source.find({}, "_id"):
             sources[source.id] = Stats.Count(
-                all=self.db.proxy.count({"source": source.id}),
-                ok=self.db.proxy.count({"source": source.id, "status": Status.OK}),
-                live=self.db.proxy.count(
+                all=await self.db.proxy.count({"source": source.id}),
+                ok=await self.db.proxy.count({"source": source.id, "status": Status.OK}),
+                live=await self.db.proxy.count(
                     {
                         "source": source.id,
                         "status": Status.OK,
@@ -54,8 +54,8 @@ class SourceService(AppService):
             )
         return Stats(all=all_, sources=sources)
 
-    def check(self, pk: str) -> int:
-        source = self.db.source.get(pk)
+    async def check(self, pk: str) -> int:
+        source = await self.db.source.get(pk)
         urls = []
 
         # collect from items
@@ -67,7 +67,7 @@ class SourceService(AppService):
 
         # collect from link
         if source.link and source.default:
-            res = hr(source.link, timeout=10)
+            res = await ahr(source.link, timeout=10)
             ip_addresses = parse_ipv4_addresses(res.body)
             new_urls = [source.default.url(item) for item in ip_addresses]
             urls.extend(new_urls)
@@ -75,20 +75,20 @@ class SourceService(AppService):
         proxies = [Proxy.new(pk, url) for url in urls]
         if proxies:
             with contextlib.suppress(BulkWriteError):
-                self.db.proxy.insert_many(proxies, ordered=False)
+                await self.db.proxy.insert_many(proxies, ordered=False)
 
-        self.db.source.set(pk, {"checked_at": utc_now()})
+        await self.db.source.set(pk, {"checked_at": utc_now()})
 
         return len(proxies)
 
-    @synchronized
-    def check_next(self) -> None:
-        source = self.db.source.find_one(
+    @async_synchronized
+    async def check_next(self) -> None:
+        source = await self.db.source.find_one(
             {"$or": [{"checked_at": None}, {"checked_at": {"$lt": utc_delta(hours=-1)}}]},
             "checked_at",
         )
         if source:
-            self.check(source.id)
+            await self.check(source.id)
 
 
 def parse_ipv4_addresses(data: str) -> set[str]:

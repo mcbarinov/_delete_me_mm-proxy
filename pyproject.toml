@@ -1,10 +1,11 @@
 [project]
 name = "app"
-version = "0.3.3"
+version = "0.4.1"
 description = ""
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
-    "mm-base5~=0.0.9",
+    "mm-base6==0.0.4",
+    "mm-std~=0.3.11",
 ]
 
 [build-system]
@@ -16,22 +17,26 @@ dev-dependencies = [
     "pytest~=8.3.5",
     "pytest-xdist~=3.6.1",
     "pytest-httpserver~=1.1.2",
-    "ruff~=0.10.0",
+    "ruff~=0.11.1",
     "pip-audit~=2.8.0",
     "bandit~=1.8.3",
     "mypy~=1.15.0",
+    "watchfiles>=1.0.4",
 ]
 
 [tool.mypy]
 python_version = "3.13"
-implicit_reexport = true
+mypy_path = "stubs"
 warn_no_return = false
 strict = true
 plugins = "pydantic.mypy"
+exclude = ["^tests/", "^cookiecutter", "^demo/"]
+
 
 [tool.ruff]
 line-length = 130
 target-version = "py313"
+exclude = ["demo/", "cookiecutter/"]
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
@@ -57,6 +62,7 @@ ignore = [
     "RET503", # flake8-return: implicit-return
     "RUF012", # ruff: mutable-class-default
     "COM812", # it's used in ruff formatter
+    # "T201", # DELETE ME!
 ]
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id"]
@@ -68,7 +74,9 @@ classmethod-decorators = ["field_validator"]
 quote-style = "double"
 indent-style = "space"
 
-
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = ["B311"]
+
+[tool.pytest.ini_options]
+addopts = "-n auto"

@@ -11,10 +11,10 @@ router = APIRouter(prefix="/api/proxies", tags=["proxy"])
 
 
 @router.get("/live")
-def get_live_proxies(
+async def get_live_proxies(
     core: CoreDep, sources: str | None = None, format_: Annotated[str, Query(alias="format")] = "json"
 ) -> Response:
-    proxies = core.proxy_service.get_live_proxies(sources.split(",") if sources else None)
+    proxies = await core.proxy_service.get_live_proxies(sources.split(",") if sources else None)
     proxy_urls = [p.url for p in proxies]
     if format_ == "text":
         return Response(content="\n".join(proxy_urls), media_type="text/plain")
@@ -23,15 +23,15 @@ def get_live_proxies(
 
 
 @router.get("/{id}")
-def get_proxy(core: CoreDep, id: ObjectId) -> Proxy:
-    return core.db.proxy.get(id)
+async def get_proxy(core: CoreDep, id: ObjectId) -> Proxy:
+    return await core.db.proxy.get(id)
 
 
 @router.get("/{id}/url", response_class=PlainTextResponse)
-def get_proxy_url(core: CoreDep, id: ObjectId) -> str:
-    return core.db.proxy.get(id).url
+async def get_proxy_url(core: CoreDep, id: ObjectId) -> str:
+    return (await core.db.proxy.get(id)).url
 
 
 @router.post("/{id}/check")
-def check_proxy(core: CoreDep, id: ObjectId) -> dict[str, object]:
-    return core.proxy_service.check(id)
+async def check_proxy(core: CoreDep, id: ObjectId) -> dict[str, object]:
+    return await core.proxy_service.check(id)

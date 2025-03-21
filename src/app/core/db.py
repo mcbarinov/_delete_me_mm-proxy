@@ -5,8 +5,8 @@ from enum import Enum, unique
 from urllib.parse import urlparse
 
 from bson import ObjectId
-from mm_base5 import BaseDb
-from mm_mongo import MongoCollection, MongoModel
+from mm_base6 import BaseDb
+from mm_mongo import AsyncMongoCollection, MongoModel
 from mm_std import utc_delta, utc_now
 from pydantic import BaseModel, Field, field_validator
 
@@ -28,7 +28,7 @@ class Source(MongoModel[str]):
             schema = "socks5" if self.protocol == Protocol.SOCKS5 else "http"
             return f"{schema}://{self.username}:{self.password}@{ip}:{self.port}"
 
-    __collection__: str = "sources"
+    __collection__: str = "source"
     __indexes__ = ["created_at", "checked_at"]
 
     default: Default | None = None
@@ -53,7 +53,7 @@ class Status(str, Enum):
 
 
 class Proxy(MongoModel[ObjectId]):
-    __collection__ = "proxies"
+    __collection__ = "proxy"
     __indexes__ = ["!ip", "source", "protocol", "status", "created_at", "checked_at", "last_ok_at"]
 
     source: str
@@ -89,5 +89,5 @@ class Proxy(MongoModel[ObjectId]):
 
 
 class Db(BaseDb):
-    source: MongoCollection[str, Source]
-    proxy: MongoCollection[ObjectId, Proxy]
+    source: AsyncMongoCollection[str, Source]
+    proxy: AsyncMongoCollection[ObjectId, Proxy]

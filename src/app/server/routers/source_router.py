@@ -8,25 +8,25 @@ router = APIRouter(prefix="/api/sources", tags=["source"])
 
 
 @router.get("/{id}")
-def get_source(core: CoreDep, id: str) -> Source:
-    return core.db.source.get(id)
+async def get_source(core: CoreDep, id: str) -> Source:
+    return await core.db.source.get(id)
 
 
 @router.post("/{id}/check")
-def check_source(core: CoreDep, id: str) -> int:
-    return core.source_service.check(id)
+async def check_source(core: CoreDep, id: str) -> int:
+    return await core.source_service.check(id)
 
 
 @router.delete("/{id}/default")
-def delete_source_default(core: CoreDep, id: str) -> MongoUpdateResult:
-    return core.db.source.set(id, {"default": None})
+async def delete_source_default(core: CoreDep, id: str) -> MongoUpdateResult:
+    return await core.db.source.set(id, {"default": None})
 
 
 @router.delete("/{id}")
-def delete_source(core: CoreDep, id: str) -> MongoDeleteResult:
-    return core.source_service.delete(id)
+async def delete_source(core: CoreDep, id: str) -> MongoDeleteResult:
+    return await core.source_service.delete(id)
 
 
 @router.delete("/{id}/proxies")
-def delete_source_proxies(core: CoreDep, id: str) -> MongoDeleteResult:
-    return core.db.proxy.delete_many({"source": id})
+async def delete_source_proxies(core: CoreDep, id: str) -> MongoDeleteResult:
+    return await core.db.proxy.delete_many({"source": id})

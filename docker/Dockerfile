@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.9
 ARG python_version=3.13.2
-ARG uv_version=0.6.4
+ARG uv_version=0.6.9
 
 FROM ghcr.io/astral-sh/uv:${uv_version} AS uv_builder
 FROM python:${python_version} AS builder
@@ -46,5 +46,4 @@ COPY --from=builder --chown=app:app /app /app
 USER app
 WORKDIR /app
 EXPOSE 3000
-CMD ["uvicorn", "--workers", "1", "--host", "0.0.0.0", "--port", "3000", "--log-level=warning", "--factory", "app.main:start"]
-
+CMD ["python", "-m", "app.main"]

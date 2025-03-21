@@ -49,7 +49,4 @@ publish: docker-upload
 	cd ansible;	ansible-playbook -i hosts.yml --extra-vars="app_version={{version}}" -t publish playbook.yml
 
 dev:
-    uv run uvicorn --reload --port 3000 --log-level=warning --factory app.main:start
-
-uvicorn:
-    uvicorn --port 3000 --log-level=warning --factory app.main:start
+    uv run python -m watchfiles --sigint-timeout=5 --grace-period=5  --sigkill-timeout=5 "python -m app.main" src
