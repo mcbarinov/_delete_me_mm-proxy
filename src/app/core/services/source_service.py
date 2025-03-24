@@ -34,13 +34,13 @@ class SourceService(AppService):
         return await self.db.source.delete(id)
 
     async def calc_stats(self) -> Stats:
-        all_ = Stats.Count(
-            all=await self.db.proxy.count({}),
-            ok=await self.db.proxy.count({"status": Status.OK}),
-            live=await self.db.proxy.count(
-                {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
-            ),
+        all_uniq_ip = await self.db.proxy.collection.distinct("ip", {})
+        ok_uniq_ip = await self.db.proxy.collection.distinct("ip", {"status": Status.OK})
+        live_uniq_ip = await self.db.proxy.collection.distinct(
+            "ip", {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
         )
+
+        all_ = Stats.Count(all=len(all_uniq_ip), ok=len(ok_uniq_ip), live=len(live_uniq_ip))
         sources = {}
         for source in await self.db.source.find({}, "_id"):
             sources[source.id] = Stats.Count(
