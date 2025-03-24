@@ -53,6 +53,13 @@ async def create_source(
     return redirect("/sources")
 
 
+@router.post("/sources/import")
+async def import_sources(render: RenderDep, core: CoreDep, toml: Annotated[str, Form()]) -> RedirectResponse:
+    imported_sources = await core.source_service.import_from_toml(toml)
+    render.flash(f"Sources imported successfully: {imported_sources}")
+    return redirect("/sources")
+
+
 @router.post("/sources/{id}/items")
 async def set_source_items(render: RenderDep, core: CoreDep, id: str, items: Annotated[str, Form()]) -> RedirectResponse:
     await core.db.source.set(id, {"items": str_to_list(items, unique=True)})

@@ -1,10 +1,16 @@
 from fastapi import APIRouter
 from mm_mongo import MongoDeleteResult, MongoUpdateResult
+from starlette.responses import PlainTextResponse
 
 from app.core.db import Source
 from app.server.deps import CoreDep
 
 router = APIRouter(prefix="/api/sources", tags=["source"])
+
+
+@router.get("/export", response_class=PlainTextResponse)
+async def export_sources(core: CoreDep) -> str:
+    return await core.source_service.export_as_toml()
 
 
 @router.get("/{id}")

@@ -5,7 +5,13 @@
     <ul>
       <li><h3>sources</h3></li>
       <li>
-        <button onclick="toggleModal(event)" data-target="modal-create" class="outline">create</button>
+        <a onclick="toggleModal(event)" data-target="modal-create" class="outline" role="button">create</a>
+      </li>
+      <li>
+        <a href="/api/sources/export" class="outline" role="button">export</a>
+      </li>
+      <li>
+        <a onclick="toggleModal(event)" data-target="modal-import" class="outline" role="button">import</a>
       </li>
     </ul>
     <dialog id="modal-create">
@@ -16,6 +22,15 @@
             <input type="text" name="link" placeholder="link">
             <input type="submit" value="create">
           </fieldset>
+        </form>
+      </article>
+    </dialog>
+
+    <dialog id="modal-import">
+      <article>
+        <form method="POST" action="/sources/import">
+          <textarea name="toml" rows="10" placeholder="sources as toml" required></textarea>
+          <input type="submit" value="import">
         </form>
       </article>
     </dialog>
@@ -74,8 +89,8 @@
               <form method="POST" action="/sources/{{ s.id }}/default">
                 <select name="protocol" required>
                   <option value="" disabled selected>protocol...</option>
-                  <option value="HTTP" {{ "selected" if s.default.protocol == "HTTP" }}>HTTP</option>
-                  <option value="SOCKS5" {{ "selected" if s.default.protocol == "SOCKS5" }}>SOCKS5</option>
+                  <option value="http" {{ "selected" if s.default.protocol == "http" }}>http</option>
+                  <option value="socks5" {{ "selected" if s.default.protocol == "socks5" }}>socks5</option>
                 </select>
                 <input type="text" name="username" placeholder="username" value="{{ s.default.username }}">
                 <input type="text" name="password" placeholder="password" value="{{ s.default.password }}">

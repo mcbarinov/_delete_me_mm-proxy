@@ -1,8 +1,10 @@
 import contextlib
 import re
 
+import pydash
+from mm_base6 import UserError
 from mm_mongo import MongoDeleteResult, MongoInsertOneResult
-from mm_std import ahr, async_synchronized, utc_delta, utc_now
+from mm_std import ahr, async_synchronized, toml_dumps, toml_loads, utc_delta, utc_now
 from pydantic import BaseModel
 from pymongo.errors import BulkWriteError
 
@@ -54,8 +56,9 @@ class SourceService(AppService):
             )
         return Stats(all=all_, sources=sources)
 
-    async def check(self, pk: str) -> int:
-        source = await self.db.source.get(pk)
+    async def check(self, id: str) -> int:
+        self.logger.debug("check source %s", id)
+        source = await self.db.source.get(id)
         urls = []
 
         # collect from items
@@ -72,12 +75,12 @@ class SourceService(AppService):
             new_urls = [source.default.url(item) for item in ip_addresses]
             urls.extend(new_urls)
 
-        proxies = [Proxy.new(pk, url) for url in urls]
+        proxies = [Proxy.new(id, url) for url in urls]
         if proxies:
             with contextlib.suppress(BulkWriteError):
                 await self.db.proxy.insert_many(proxies, ordered=False)
 
-        await self.db.source.set(pk, {"checked_at": utc_now()})
+        await self.db.source.set(id, {"checked_at": utc_now()})
 
         return len(proxies)
 
@@ -89,6 +92,23 @@ class SourceService(AppService):
         )
         if source:
             await self.check(source.id)
+
+    async def export_as_toml(self) -> str:
+        sources = [s.model_dump(exclude={"created_at", "checked_at"}) for s in await self.db.source.find({})]
+        sources = [pydash.rename_keys(s, {"_id": "id"}) for s in sources]
+        return toml_dumps({"sources": sources})
+
+    async def import_from_toml(self, toml: str) -> int:
+        data = toml_loads(toml)
+        try:
+            sources = [Source(**source) for source in data.get("sources", [])]
+        except Exception as e:
+            raise UserError(f"Invalid toml data: {e}") from e
+
+        for source in sources:
+            await self.db.source.set(source.id, source.model_dump(exclude={"_id"}), upsert=True)
+
+        return len(sources)
 
 
 def parse_ipv4_addresses(data: str) -> set[str]:

@@ -14,7 +14,7 @@ class ProxyService(AppService):
         super().__init__(base_params)
 
     async def check(self, id: ObjectId) -> dict[str, object]:
-        self.logger.debug("check proxy: %s", id)
+        # self.logger.debug("check proxy: %s", id)
         proxy = await self.db.proxy.get(id)
 
         r1, r2 = await asyncio.gather(httpbin_check(proxy.ip, proxy.url), ipify_check(proxy.ip, proxy.url))

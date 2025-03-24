@@ -13,8 +13,8 @@ from pydantic import BaseModel, Field, field_validator
 
 @unique
 class Protocol(str, Enum):
-    HTTP = "HTTP"
-    SOCKS5 = "SOCKS5"
+    HTTP = "http"
+    SOCKS5 = "socks5"
 
 
 class Source(MongoModel[str]):
