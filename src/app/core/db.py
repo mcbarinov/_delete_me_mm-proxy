@@ -54,7 +54,7 @@ class Status(str, Enum):
 
 class Proxy(MongoModel[ObjectId]):
     __collection__ = "proxy"
-    __indexes__ = ["!ip", "source", "protocol", "status", "created_at", "checked_at", "last_ok_at"]
+    __indexes__ = ["!url", "ip", "source", "protocol", "status", "created_at", "checked_at", "last_ok_at"]
 
     source: str
     url: str
