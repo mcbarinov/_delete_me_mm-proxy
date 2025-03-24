@@ -1,10 +1,11 @@
 import asyncio
 
 import anyio
+import pydash
 from bson import ObjectId
 from mm_std import ahr, async_synchronized, utc_delta, utc_now
 
-from app.core.db import Proxy, Status
+from app.core.db import Protocol, Proxy, Status
 from app.core.types_ import AppService, AppServiceParams
 
 
@@ -42,11 +43,18 @@ class ProxyService(AppService):
             for p in proxies:
                 tg.start_soon(self.check, p.id)
 
-    async def get_live_proxies(self, sources: list[str] | None) -> list[Proxy]:
+    async def get_live_proxies(
+        self, sources: list[str] | None, protocol: Protocol | None = None, unique_ip: bool = False
+    ) -> list[Proxy]:
         query = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
         if sources:
             query["source"] = {"$in": sources}
-        return await self.db.proxy.find(query, "url")
+        if protocol:
+            query["protocol"] = protocol.value
+        proxies = await self.db.proxy.find(query, "url")
+        if unique_ip:
+            proxies = pydash.uniq_by(proxies, lambda p: p.ip)
+        return proxies
 
 
 async def httpbin_check(ip: str, proxy: str) -> bool:
