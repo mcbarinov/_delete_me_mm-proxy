@@ -18,6 +18,11 @@ async def index_page(render: RenderDep) -> HTMLResponse:
     return await render.html("index.j2")
 
 
+@router.get("/bot")
+async def bot_page(render: RenderDep, core: CoreDep) -> HTMLResponse:
+    checks_per_minute = await core.proxy_service.counter.get_count()
+    return await render.html("bot.j2", checks_per_minute=checks_per_minute)
+
 @router.get("/sources")
 async def sources_page(render: RenderDep, core: CoreDep) -> HTMLResponse:
     stats = await core.source_service.calc_stats()

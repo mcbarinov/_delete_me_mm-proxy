@@ -5,7 +5,7 @@ core_config = CoreConfig()
 
 server_config = ServerConfig()
 server_config.tags = ["source", "proxy"]
-server_config.main_menu = {"/sources": "sources", "/proxies": "proxies"}
+server_config.main_menu = {"/bot": "bot", "/sources": "sources", "/proxies": "proxies"}
 
 
 class DConfigSettings(DConfigModel):

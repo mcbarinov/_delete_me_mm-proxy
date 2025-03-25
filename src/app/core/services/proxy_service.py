@@ -7,17 +7,20 @@ from mm_std import ahr, async_synchronized, utc_delta, utc_now
 
 from app.core.db import Protocol, Proxy, Status
 from app.core.types_ import AppService, AppServiceParams
+from app.core.utils import AsyncSlidingWindowCounter
 
 
 class ProxyService(AppService):
     def __init__(self, base_params: AppServiceParams) -> None:
         super().__init__(base_params)
+        self.counter = AsyncSlidingWindowCounter(window_seconds=60)  # how many proxy checks per minute
 
     async def check(self, id: ObjectId) -> dict[str, object]:
         # self.logger.debug("check proxy: %s", id)
         proxy = await self.db.proxy.get(id)
 
         r1, r2 = await asyncio.gather(httpbin_check(proxy.ip, proxy.url), ipify_check(proxy.ip, proxy.url))
+        await self.counter.record_operation()
         status = Status.OK if r1 or r2 else Status.DOWN
 
         updated = {"status": status, "checked_at": utc_now()}
