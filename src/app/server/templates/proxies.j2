@@ -33,8 +33,9 @@
       <th>status</th>
       <th>source</th>
       <th>protocol</th>
-      <th>ok_count</th>
-      <th>down_count</th>
+      <th>ok</th>
+      <th>down</th>
+      <th>checked_at</th>
       <th>check</th>
       <th>url</th>
       <th>view</th>
@@ -49,6 +50,7 @@
         <td>{{ p.protocol.value }}</td>
         <td>{{ p.history_ok_count }}</td>
         <td>{{ p.history_down_count }}</td>
+        <td>{{ p.checked_at | dt }}</td>
         <td><a href="/api-post/proxies/{{ p.id }}/check">check</a></td>
         <td><a href="/api/proxies/{{ p.id }}/url">view</a></td>
         <td><a href="/api/proxies/{{ p.id }}">view</a></td>

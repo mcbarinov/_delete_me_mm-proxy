@@ -34,11 +34,11 @@ class ProxyService(AppService):
 
     @async_synchronized
     async def check_next(self) -> None:
-        proxies = await self.db.proxy.find(
-            {"$or": [{"checked_at": None}, {"checked_at": {"$lt": utc_delta(minutes=-5)}}]},
-            "checked_at",
-            limit=15,
-        )
+        limit = self.dconfig.max_proxies_check
+        proxies = await self.db.proxy.find({"checked_at": None}, limit=limit)
+        if len(proxies) < limit:
+            proxies += await self.db.proxy.find({"checked_at": {"$lt": utc_delta(minutes=-5)}}, limit=limit - len(proxies))
+
         async with anyio.create_task_group() as tg:
             for p in proxies:
                 tg.start_soon(self.check, p.id)

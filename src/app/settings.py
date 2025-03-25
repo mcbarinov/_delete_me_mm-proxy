@@ -10,6 +10,7 @@ server_config.main_menu = {"/sources": "sources", "/proxies": "proxies"}
 
 class DConfigSettings(DConfigModel):
     live_last_ok_minutes = DC(15, "live proxies only if they checked less than this minutes ago")
+    max_proxies_check = DC(30, "max proxies to check in one iteration")
 
 
 class DValueSettings(DValueModel):
