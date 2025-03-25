@@ -1,6 +1,6 @@
 import asyncio
+import time
 
-import anyio
 import pydash
 from bson import ObjectId
 from mm_std import ahr, async_synchronized, utc_delta, utc_now
@@ -16,11 +16,16 @@ class ProxyService(AppService):
         self.counter = AsyncSlidingWindowCounter(window_seconds=60)  # how many proxy checks per minute
 
     async def check(self, id: ObjectId) -> dict[str, object]:
-        # self.logger.debug("check proxy: %s", id)
+        start = time.perf_counter()
         proxy = await self.db.proxy.get(id)
 
-        r1, r2 = await asyncio.gather(httpbin_check(proxy.ip, proxy.url), ipify_check(proxy.ip, proxy.url))
+        r1, r2 = await asyncio.gather(
+            httpbin_check(proxy.ip, proxy.url, self.dconfig.proxy_check_timeout),
+            ipify_check(proxy.ip, proxy.url, self.dconfig.proxy_check_timeout),
+        )
+
         await self.counter.record_operation()
+
         status = Status.OK if r1 or r2 else Status.DOWN
 
         updated = {"status": status, "checked_at": utc_now()}
@@ -33,6 +38,7 @@ class ProxyService(AppService):
             await self.db.proxy.delete(id)
             updated["deleted"] = True
 
+        self.logger.debug("check proxy %s done in %.3f seconds", proxy.url, time.perf_counter() - start)
         return updated
 
     @async_synchronized
@@ -42,9 +48,11 @@ class ProxyService(AppService):
         if len(proxies) < limit:
             proxies += await self.db.proxy.find({"checked_at": {"$lt": utc_delta(minutes=-5)}}, limit=limit - len(proxies))
 
-        async with anyio.create_task_group() as tg:
-            for p in proxies:
-                tg.start_soon(self.check, p.id)
+        await asyncio.gather(*[self.check(p.id) for p in proxies])
+
+        # async with anyio.create_task_group() as tg:
+        #     for p in proxies:
+        #         tg.start_soon(self.check, p.id)
 
     async def get_live_proxies(
         self, sources: list[str] | None, protocol: Protocol | None = None, unique_ip: bool = False
@@ -60,11 +68,11 @@ class ProxyService(AppService):
         return proxies
 
 
-async def httpbin_check(ip: str, proxy: str) -> bool:
-    res = await ahr("https://httpbin.org/ip", proxy=proxy, timeout=5)
+async def httpbin_check(ip: str, proxy: str, timeout: float) -> bool:
+    res = await ahr("https://httpbin.org/ip", proxy=proxy, timeout=timeout)
     return res.json and res.json.get("origin", None) == ip  # type: ignore[no-any-return]
 
 
-async def ipify_check(ip: str, proxy: str) -> bool:
-    res = await ahr("https://api.ipify.org/?format=json", proxy=proxy, timeout=5)
+async def ipify_check(ip: str, proxy: str, timeout: float) -> bool:
+    res = await ahr("https://api.ipify.org/?format=json", proxy=proxy, timeout=timeout)
     return res.json and res.json.get("ip", None) == ip  # type: ignore[no-any-return]
