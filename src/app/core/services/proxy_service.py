@@ -48,7 +48,9 @@ class ProxyService(AppService):
         if len(proxies) < limit:
             proxies += await self.db.proxy.find({"checked_at": {"$lt": utc_delta(minutes=-5)}}, limit=limit - len(proxies))
 
+        start = time.perf_counter()
         await asyncio.gather(*[self.check(p.id) for p in proxies])
+        self.logger.debug("check proxies done in %.3f seconds", time.perf_counter() - start)
 
         # async with anyio.create_task_group() as tg:
         #     for p in proxies:
