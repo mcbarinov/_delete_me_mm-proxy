@@ -3,7 +3,7 @@ import time
 
 import pydash
 from bson import ObjectId
-from mm_std import ahr, async_synchronized, utc_delta, utc_now
+from mm_std import async_synchronized, hra, utc_delta, utc_now
 
 from app.core.db import Protocol, Proxy, Status
 from app.core.types_ import AppService, AppServiceParams
@@ -71,10 +71,10 @@ class ProxyService(AppService):
 
 
 async def httpbin_check(ip: str, proxy: str, timeout: float) -> bool:
-    res = await ahr("https://httpbin.org/ip", proxy=proxy, timeout=timeout)
+    res = await hra("https://httpbin.org/ip", proxy=proxy, timeout=timeout)
     return res.json and res.json.get("origin", None) == ip  # type: ignore[no-any-return]
 
 
 async def ipify_check(ip: str, proxy: str, timeout: float) -> bool:
-    res = await ahr("https://api.ipify.org/?format=json", proxy=proxy, timeout=timeout)
+    res = await hra("https://api.ipify.org/?format=json", proxy=proxy, timeout=timeout)
     return res.json and res.json.get("ip", None) == ip  # type: ignore[no-any-return]

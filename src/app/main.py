@@ -1,5 +1,6 @@
 import asyncio
 
+import uvloop
 from mm_base6 import init_server
 from mm_base6.server.uvicorn import serve_uvicorn
 
@@ -19,4 +20,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvloop.run(main())
