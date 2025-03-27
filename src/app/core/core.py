@@ -17,8 +17,8 @@ class Core(BaseCore[DConfigSettings, DValueSettings, Db]):
         res = await super().base_init(core_config, DConfigSettings, DValueSettings, Db)
         res.proxy_service = ProxyService(res.base_service_params)
         res.source_service = SourceService(res.base_service_params)
-
-        res.scheduler.add_task("proxy_check", 1, res.proxy_service.check_next)
-        res.scheduler.add_task("source_check", 60, res.source_service.check_next)
-
         return res
+
+    def configure_scheduler(self) -> None:
+        self.scheduler.add_task("proxy_check", 1, self.proxy_service.check_next)
+        self.scheduler.add_task("source_check", 60, self.source_service.check_next)
