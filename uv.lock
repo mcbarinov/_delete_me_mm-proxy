@@ -110,7 +110,7 @@ wheels = [
 
 [[package]]
 name = "app"
-version = "0.4.5"
+version = "0.4.7"
 source = { editable = "." }
 dependencies = [
     { name = "mm-base6" },
@@ -129,7 +129,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "mm-base6", specifier = "==0.0.6" }]
+requires-dist = [{ name = "mm-base6", specifier = "==0.0.7" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -644,7 +644,7 @@ wheels = [
 
 [[package]]
 name = "mm-base6"
-version = "0.0.6"
+version = "0.0.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
@@ -655,7 +655,7 @@ dependencies = [
     { name = "uvloop" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/2a/d4fb3a382650064e3d0cf274186423bcd10794fb7542ffffc960698ebb51/mm_base6-0.0.6-py3-none-any.whl", hash = "sha256:2f9e8cb25c01102c1c1fc3e4ccba6d771ede61b892542c371b9e0b6794944cff", size = 41607 },
+    { url = "https://files.pythonhosted.org/packages/cd/28/20ccd3236b10cd2e3413415c80b2c32d4348329139e82c6cc293685afe8d/mm_base6-0.0.7-py3-none-any.whl", hash = "sha256:add8f3e8636ce172d44aef09ea3f0b6036982c04e20291ac561afac91c43d8d9", size = 42852 },
 ]
 
 [[package]]

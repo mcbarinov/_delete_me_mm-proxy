@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import cast
+from typing import Self
 
 from mm_base6 import BaseCore, CoreConfig
 
@@ -15,8 +13,8 @@ class Core(BaseCore[DConfigSettings, DValueSettings, Db]):
     source_service: SourceService
 
     @classmethod
-    async def init(cls, core_config: CoreConfig) -> Core:
-        res = cast(Core, await super().base_init(core_config, DConfigSettings, DValueSettings, Db))
+    async def init(cls, core_config: CoreConfig) -> Self:
+        res = await super().base_init(core_config, DConfigSettings, DValueSettings, Db)
         res.proxy_service = ProxyService(res.base_service_params)
         res.source_service = SourceService(res.base_service_params)
 
