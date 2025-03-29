@@ -1,8 +1,8 @@
 import asyncio
-import time
 
 import pydash
 from bson import ObjectId
+from mm_mongo import MongoUpdateResult
 from mm_std import async_synchronized, hra, utc_delta, utc_now
 
 from app.core.db import Protocol, Proxy, Status
@@ -16,13 +16,12 @@ class ProxyService(AppService):
         self.counter = AsyncSlidingWindowCounter(window_seconds=60)  # how many proxy checks per minute
 
     async def check(self, id: ObjectId) -> dict[str, object]:
-        start = time.perf_counter()
+        # start = time.perf_counter()
         proxy = await self.db.proxy.get(id)
 
-        r1, r2 = await asyncio.gather(
-            httpbin_check(proxy.ip, proxy.url, self.dconfig.proxy_check_timeout),
-            ipify_check(proxy.ip, proxy.url, self.dconfig.proxy_check_timeout),
-        )
+        async with asyncio.TaskGroup() as tg:
+            r1 = tg.create_task(httpbin_check(proxy.ip, proxy.url, self.dconfig.proxy_check_timeout), name=f"httpbin_check_{id}")
+            r2 = tg.create_task(ipify_check(proxy.ip, proxy.url, self.dconfig.proxy_check_timeout), name=f"ipify_check_{id}")
 
         await self.counter.record_operation()
 
@@ -38,7 +37,7 @@ class ProxyService(AppService):
             await self.db.proxy.delete(id)
             updated["deleted"] = True
 
-        self.logger.debug("check proxy %s done in %.3f seconds", proxy.url, time.perf_counter() - start)
+        # self.logger.debug("check proxy %s done in %.3f seconds", proxy.url, time.perf_counter() - start)
         return updated
 
     @async_synchronized
@@ -48,13 +47,9 @@ class ProxyService(AppService):
         if len(proxies) < limit:
             proxies += await self.db.proxy.find({"checked_at": {"$lt": utc_delta(minutes=-5)}}, limit=limit - len(proxies))
 
-        start = time.perf_counter()
-        await asyncio.gather(*[self.check(p.id) for p in proxies])
-        self.logger.debug("check proxies done in %.3f seconds", time.perf_counter() - start)
-
-        # async with anyio.create_task_group() as tg:
-        #     for p in proxies:
-        #         tg.start_soon(self.check, p.id)
+        async with asyncio.TaskGroup() as tg:
+            for proxy in proxies:
+                tg.create_task(self.check(proxy.id), name=f"check_proxy_{proxy.id}")
 
     async def get_live_proxies(
         self, sources: list[str] | None, protocol: Protocol | None = None, unique_ip: bool = False
@@ -68,6 +63,9 @@ class ProxyService(AppService):
         if unique_ip:
             proxies = pydash.uniq_by(proxies, lambda p: p.ip)
         return proxies
+
+    async def reset_all_proxies_status(self) -> MongoUpdateResult:
+        return await self.db.proxy.update_many({}, {"$set": {"status": Status.UNKNOWN, "checked_at": None, "last_ok_at": None}})
 
 
 async def httpbin_check(ip: str, proxy: str, timeout: float) -> bool:

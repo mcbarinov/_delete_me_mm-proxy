@@ -19,6 +19,12 @@ class Core(BaseCore[DConfigSettings, DValueSettings, Db]):
         res.source_service = SourceService(res.base_service_params)
         return res
 
-    def configure_scheduler(self) -> None:
+    async def configure_scheduler(self) -> None:
         self.scheduler.add_task("proxy_check", 1, self.proxy_service.check_next)
         self.scheduler.add_task("source_check", 60, self.source_service.check_next)
+
+    async def start(self) -> None:
+        pass
+
+    async def stop(self) -> None:
+        pass

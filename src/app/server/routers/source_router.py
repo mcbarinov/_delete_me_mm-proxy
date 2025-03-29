@@ -1,38 +1,36 @@
 from fastapi import APIRouter
+from mm_base6 import cbv
 from mm_mongo import MongoDeleteResult, MongoUpdateResult
 from starlette.responses import PlainTextResponse
 
 from app.core.db import Source
-from app.server.deps import CoreDep
+from app.server.deps import View
 
 router = APIRouter(prefix="/api/sources", tags=["source"])
 
 
-@router.get("/export", response_class=PlainTextResponse)
-async def export_sources(core: CoreDep) -> str:
-    return await core.source_service.export_as_toml()
+@cbv(router)
+class CBV(View):
+    @router.get("/export", response_class=PlainTextResponse)
+    async def export_sources(self) -> str:
+        return await self.core.source_service.export_as_toml()
 
+    @router.get("/{id}")
+    async def get_source(self, id: str) -> Source:
+        return await self.core.db.source.get(id)
 
-@router.get("/{id}")
-async def get_source(core: CoreDep, id: str) -> Source:
-    return await core.db.source.get(id)
+    @router.post("/{id}/check")
+    async def check_source(self, id: str) -> int:
+        return await self.core.source_service.check(id)
 
+    @router.delete("/{id}/default")
+    async def delete_source_default(self, id: str) -> MongoUpdateResult:
+        return await self.core.db.source.set(id, {"default": None})
 
-@router.post("/{id}/check")
-async def check_source(core: CoreDep, id: str) -> int:
-    return await core.source_service.check(id)
+    @router.delete("/{id}")
+    async def delete_source(self, id: str) -> MongoDeleteResult:
+        return await self.core.source_service.delete(id)
 
-
-@router.delete("/{id}/default")
-async def delete_source_default(core: CoreDep, id: str) -> MongoUpdateResult:
-    return await core.db.source.set(id, {"default": None})
-
-
-@router.delete("/{id}")
-async def delete_source(core: CoreDep, id: str) -> MongoDeleteResult:
-    return await core.source_service.delete(id)
-
-
-@router.delete("/{id}/proxies")
-async def delete_source_proxies(core: CoreDep, id: str) -> MongoDeleteResult:
-    return await core.db.proxy.delete_many({"source": id})
+    @router.delete("/{id}/proxies")
+    async def delete_source_proxies(self, id: str) -> MongoDeleteResult:
+        return await self.core.db.proxy.delete_many({"source": id})
