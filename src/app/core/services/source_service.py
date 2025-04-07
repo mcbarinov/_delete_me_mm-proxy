@@ -1,4 +1,5 @@
 import contextlib
+import logging
 import re
 
 import pydash
@@ -20,6 +21,9 @@ class Stats(BaseModel):
 
     all: Count
     sources: dict[str, Count]  # source_id -> Count
+
+
+logger = logging.getLogger(__name__)
 
 
 class SourceService(AppService):
@@ -57,7 +61,7 @@ class SourceService(AppService):
         return Stats(all=all_, sources=sources)
 
     async def check(self, id: str) -> int:
-        self.logger.debug("check source %s", id)
+        logger.debug("check source", extra={"id": id})
         source = await self.db.source.get(id)
         urls = []
 
