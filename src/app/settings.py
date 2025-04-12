@@ -10,6 +10,7 @@ server_config.main_menu = {"/bot": "bot", "/sources": "sources", "/proxies": "pr
 
 class DConfigSettings(DConfigModel):
     live_last_ok_minutes = DC(15, "live proxies only if they checked less than this minutes ago")
+    proxies_check = DC(True, "enable periodic proxy check")
     max_proxies_check = DC(30, "max proxies to check in one iteration")
     proxy_check_timeout = DC(5.1, "timeout for proxy check")
 
