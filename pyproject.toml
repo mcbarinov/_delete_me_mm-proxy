@@ -1,11 +1,11 @@
 [project]
 name = "app"
-version = "0.4.11"
+version = "0.4.12"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-base6==0.0.17",
-    "mm-std==0.3.24",
+    "mm-base6==0.0.18",
+    "mm-std==0.3.30",
 ]
 
 [build-system]
@@ -21,7 +21,7 @@ dev-dependencies = [
     "pip-audit~=2.9.0",
     "bandit~=1.8.3",
     "mypy~=1.15.0",
-    "watchfiles>=1.0.4",
+    "watchfiles>=1.0.5",
 ]
 
 [tool.mypy]

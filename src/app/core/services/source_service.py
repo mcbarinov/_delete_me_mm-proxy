@@ -5,7 +5,7 @@ import re
 import pydash
 from mm_base6 import UserError
 from mm_mongo import MongoDeleteResult, MongoInsertOneResult
-from mm_std import async_synchronized, hra, toml_dumps, toml_loads, utc_delta, utc_now
+from mm_std import async_synchronized, http_request, toml_dumps, toml_loads, utc_delta, utc_now
 from pydantic import BaseModel
 from pymongo.errors import BulkWriteError
 
@@ -74,8 +74,11 @@ class SourceService(AppService):
 
         # collect from link
         if source.link and source.default:
-            res = await hra(source.link, timeout=10)
-            ip_addresses = parse_ipv4_addresses(res.body)
+            res = await http_request(source.link, timeout=10)
+            if res.is_error():
+                logger.warning("Failed to fetch source link", extra={"link": source.link, "response": res.model_dump()})
+                return 0
+            ip_addresses = parse_ipv4_addresses(res.body or "")
             new_urls = [source.default.url(item) for item in ip_addresses]
             urls.extend(new_urls)
 
