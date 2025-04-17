@@ -41,7 +41,7 @@ class SourceService(AppService):
         all_uniq_ip = await self.db.proxy.collection.distinct("ip", {})
         ok_uniq_ip = await self.db.proxy.collection.distinct("ip", {"status": Status.OK})
         live_uniq_ip = await self.db.proxy.collection.distinct(
-            "ip", {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
+            "ip", {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dynamic_configs.live_last_ok_minutes)}}
         )
 
         all_ = Stats.Count(all=len(all_uniq_ip), ok=len(ok_uniq_ip), live=len(live_uniq_ip))
@@ -54,7 +54,7 @@ class SourceService(AppService):
                     {
                         "source": source.id,
                         "status": Status.OK,
-                        "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)},
+                        "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dynamic_configs.live_last_ok_minutes)},
                     }
                 ),
             )
@@ -76,7 +76,7 @@ class SourceService(AppService):
         if source.link and source.default:
             res = await http_request(source.link, timeout=10)
             if res.is_error():
-                logger.warning("Failed to fetch source link", extra={"link": source.link, "response": res.model_dump()})
+                logger.warning("Failed to fetch source link", extra={"link": source.link, "response": res.to_dict()})
                 return 0
             ip_addresses = parse_ipv4_addresses(res.body or "")
             new_urls = [source.default.url(item) for item in ip_addresses]

@@ -20,8 +20,12 @@ class ProxyService(AppService):
         proxy = await self.db.proxy.get(id)
 
         async with asyncio.TaskGroup() as tg:
-            r1 = tg.create_task(httpbin_check(proxy.ip, proxy.url, self.dconfig.proxy_check_timeout), name=f"httpbin_check_{id}")
-            r2 = tg.create_task(ipify_check(proxy.ip, proxy.url, self.dconfig.proxy_check_timeout), name=f"ipify_check_{id}")
+            r1 = tg.create_task(
+                httpbin_check(proxy.ip, proxy.url, self.dynamic_configs.proxy_check_timeout), name=f"httpbin_check_{id}"
+            )
+            r2 = tg.create_task(
+                ipify_check(proxy.ip, proxy.url, self.dynamic_configs.proxy_check_timeout), name=f"ipify_check_{id}"
+            )
 
         await self.counter.record_operation()
 
@@ -42,9 +46,9 @@ class ProxyService(AppService):
 
     @async_synchronized
     async def check_next(self) -> None:
-        if not self.dconfig.proxies_check:
+        if not self.dynamic_configs.proxies_check:
             return
-        limit = self.dconfig.max_proxies_check
+        limit = self.dynamic_configs.max_proxies_check
         proxies = await self.db.proxy.find({"checked_at": None}, limit=limit)
         if len(proxies) < limit:
             proxies += await self.db.proxy.find(
@@ -58,7 +62,7 @@ class ProxyService(AppService):
     async def get_live_proxies(
         self, sources: list[str] | None, protocol: Protocol | None = None, unique_ip: bool = False
     ) -> list[Proxy]:
-        query = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dconfig.live_last_ok_minutes)}}
+        query = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dynamic_configs.live_last_ok_minutes)}}
         if sources:
             query["source"] = {"$in": sources}
         if protocol:
