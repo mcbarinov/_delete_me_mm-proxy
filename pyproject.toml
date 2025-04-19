@@ -1,10 +1,10 @@
 [project]
 name = "app"
-version = "0.5.0"
+version = "0.5.1"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-base6==0.1.0"
+    "mm-base6==0.1.1"
 ]
 
 [build-system]
@@ -16,7 +16,7 @@ dev-dependencies = [
     "pytest~=8.3.5",
     "pytest-xdist~=3.6.1",
     "pytest-httpserver~=1.1.3",
-    "ruff~=0.11.5",
+    "ruff~=0.11.6",
     "pip-audit~=2.9.0",
     "bandit~=1.8.3",
     "mypy~=1.15.0",
@@ -61,8 +61,7 @@ ignore = [
     "RET503", # flake8-return: implicit-return
     "RUF012", # ruff: mutable-class-default
     "COM812", # it's used in ruff formatter
-    "ASYNC109", # flake8-async
-    # "T201", # DELETE ME!
+    "ASYNC109",
 ]
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id"]

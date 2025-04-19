@@ -75,7 +75,7 @@ class SourceService(AppService):
         # collect from link
         if source.link and source.default:
             res = await http_request(source.link, timeout=10)
-            if res.is_error():
+            if res.is_err():
                 logger.warning("Failed to fetch source link", extra={"link": source.link, "response": res.to_dict()})
                 return 0
             ip_addresses = parse_ipv4_addresses(res.body or "")
