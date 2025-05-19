@@ -22,7 +22,7 @@ class CBV(View):
         protocol: Protocol | None = None,
         format_: Annotated[str, Query(alias="format")] = "json",
     ) -> Response:
-        proxies = await self.core.proxy_service.get_live_proxies(sources.split(",") if sources else None, protocol, unique_ip)
+        proxies = await self.core.services.proxy.get_live_proxies(sources.split(",") if sources else None, protocol, unique_ip)
         proxy_urls = [p.url for p in proxies]
         if format_ == "text":
             return Response(content="\n".join(proxy_urls), media_type="text/plain")
@@ -31,7 +31,7 @@ class CBV(View):
 
     @router.post("/reset-status")
     async def reset_all_proxies_status(self) -> MongoUpdateResult:
-        return await self.core.proxy_service.reset_all_proxies_status()
+        return await self.core.services.proxy.reset_all_proxies_status()
 
     @router.get("/{id}")
     async def get_proxy(self, id: ObjectId) -> Proxy:
@@ -43,4 +43,4 @@ class CBV(View):
 
     @router.post("/{id}/check")
     async def check_proxy(self, id: ObjectId) -> dict[str, object]:
-        return await self.core.proxy_service.check(id)
+        return await self.core.services.proxy.check(id)

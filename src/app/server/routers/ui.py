@@ -21,12 +21,12 @@ class PageCBV(View):
 
     @router.get("/bot")
     async def bot(self) -> HTMLResponse:
-        checks_per_minute = await self.core.proxy_service.counter.get_count()
+        checks_per_minute = await self.core.services.proxy.counter.get_count()
         return await self.render.html("bot.j2", checks_per_minute=checks_per_minute)
 
     @router.get("/sources")
     async def sources_page(self) -> HTMLResponse:
-        stats = await self.core.source_service.calc_stats()
+        stats = await self.core.services.source.calc_stats()
         sources = await self.core.db.source.find({}, "_id")
         return await self.render.html("sources.j2", stats=stats, sources=sources)
 
@@ -57,7 +57,7 @@ class ActionCBV(View):
 
     @router.post("/sources/import")
     async def import_sources(self, toml: Annotated[str, Form()]) -> RedirectResponse:
-        imported_sources = await self.core.source_service.import_from_toml(toml)
+        imported_sources = await self.core.services.source.import_from_toml(toml)
         self.render.flash(f"Sources imported successfully: {imported_sources}")
         return redirect("/sources")
 

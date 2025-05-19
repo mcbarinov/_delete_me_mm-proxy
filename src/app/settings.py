@@ -20,10 +20,10 @@ class DynamicSettings(DynamicValuesModel):
 
 
 def get_router() -> APIRouter:
-    from app.server.routers import proxy_router, source_router, ui_router
+    from app.server import routers
 
     router = APIRouter()
-    router.include_router(ui_router.router)
-    router.include_router(source_router.router)
-    router.include_router(proxy_router.router)
+    router.include_router(routers.ui.router)
+    router.include_router(routers.source.router)
+    router.include_router(routers.proxy.router)
     return router

@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/sources", tags=["source"])
 class CBV(View):
     @router.get("/export", response_class=PlainTextResponse)
     async def export_sources(self) -> str:
-        return await self.core.source_service.export_as_toml()
+        return await self.core.services.source.export_as_toml()
 
     @router.get("/{id}")
     async def get_source(self, id: str) -> Source:
@@ -21,7 +21,7 @@ class CBV(View):
 
     @router.post("/{id}/check")
     async def check_source(self, id: str) -> int:
-        return await self.core.source_service.check(id)
+        return await self.core.services.source.check(id)
 
     @router.delete("/{id}/default")
     async def delete_source_default(self, id: str) -> MongoUpdateResult:
@@ -29,7 +29,7 @@ class CBV(View):
 
     @router.delete("/{id}")
     async def delete_source(self, id: str) -> MongoDeleteResult:
-        return await self.core.source_service.delete(id)
+        return await self.core.services.source.delete(id)
 
     @router.delete("/{id}/proxies")
     async def delete_source_proxies(self, id: str) -> MongoDeleteResult:
