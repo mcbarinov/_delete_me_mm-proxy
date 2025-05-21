@@ -1,4 +1,6 @@
 import asyncio
+import contextlib
+import logging
 
 import pydash
 from bson import ObjectId
@@ -8,6 +10,8 @@ from mm_std import async_synchronized, http_request, utc_delta, utc_now
 from app.core.db import Protocol, Proxy, Status
 from app.core.types_ import AppService, AppServiceParams
 from app.core.utils import AsyncSlidingWindowCounter
+
+logger = logging.getLogger(__name__)
 
 
 class ProxyService(AppService):
@@ -19,17 +23,11 @@ class ProxyService(AppService):
         # start = time.perf_counter()
         proxy = await self.db.proxy.get(id)
 
-        async with asyncio.TaskGroup() as tg:
-            r1 = tg.create_task(
-                httpbin_check(proxy.ip, proxy.url, self.dynamic_configs.proxy_check_timeout), name=f"httpbin_check_{id}"
-            )
-            r2 = tg.create_task(
-                ipify_check(proxy.ip, proxy.url, self.dynamic_configs.proxy_check_timeout), name=f"ipify_check_{id}"
-            )
+        logger.debug("check proxy", extra={"id": proxy.id, "ip": proxy.ip})
+
+        status = Status.OK if await check_proxy(proxy.ip, proxy.url, self.dynamic_configs.proxy_check_timeout) else Status.DOWN
 
         await self.counter.record_operation()
-
-        status = Status.OK if r1 or r2 else Status.DOWN
 
         updated = {"status": status, "checked_at": utc_now()}
         if status == Status.OK:
@@ -74,6 +72,31 @@ class ProxyService(AppService):
 
     async def reset_all_proxies_status(self) -> MongoUpdateResult:
         return await self.db.proxy.update_many({}, {"$set": {"status": Status.UNKNOWN, "checked_at": None, "last_ok_at": None}})
+
+
+async def check_proxy(ip: str, proxy: str, timeout: float) -> bool:
+    tasks = [
+        asyncio.create_task(httpbin_check(ip, proxy, timeout)),
+        asyncio.create_task(ipify_check(ip, proxy, timeout)),
+    ]
+    try:
+        for task in asyncio.as_completed(tasks):
+            result = await task
+            if result:
+                for t in tasks:  # Cancel all others if any result is True
+                    if not t.done():
+                        t.cancel()
+                        with contextlib.suppress(asyncio.CancelledError):
+                            await t
+                return True
+        return False
+    # I don't understand why this is needed :(
+    finally:  # Cleanup: just in case, ensure all tasks are cleaned up
+        for t in tasks:
+            if not t.done():
+                t.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await t
 
 
 async def httpbin_check(ip: str, proxy: str, timeout: float) -> bool:
