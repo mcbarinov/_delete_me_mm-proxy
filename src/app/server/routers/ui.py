@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Form
 from fastapi.params import Query
 from mm_base6 import cbv, redirect
-from mm_std import replace_empty_dict_values, str_to_list
+from mm_std import parse_lines, replace_empty_dict_entries
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse, RedirectResponse
 
@@ -37,8 +37,8 @@ class PageCBV(View):
         status: Annotated[str | None, Query()] = None,
         protocol: Annotated[str | None, Query()] = None,
     ) -> HTMLResponse:
-        query = replace_empty_dict_values({"source": source, "status": status, "protocol": protocol})
-        proxies = await self.core.db.proxy.find(query, "ip")  # type: ignore[arg-type]
+        query = replace_empty_dict_entries({"source": source, "status": status, "protocol": protocol})
+        proxies = await self.core.db.proxy.find(query, "ip")
         sources = [s.id for s in await self.core.db.source.find({}, "_id")]
         statuses = [s.value for s in list(Status)]
         protocols = [p.value for p in list(Protocol)]
@@ -63,7 +63,7 @@ class ActionCBV(View):
 
     @router.post("/sources/{id}/items")
     async def set_source_items(self, id: str, items: Annotated[str, Form()]) -> RedirectResponse:
-        await self.core.db.source.set(id, {"items": str_to_list(items, unique=True)})
+        await self.core.db.source.set(id, {"items": parse_lines(items, deduplicate=True)})
         self.render.flash("Source items updated successfully")
         return redirect("/sources")
 

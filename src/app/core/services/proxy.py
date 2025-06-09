@@ -4,8 +4,10 @@ import logging
 
 import pydash
 from bson import ObjectId
+from mm_concurrency import async_synchronized
+from mm_http import http_request
 from mm_mongo import MongoUpdateResult
-from mm_std import async_synchronized, http_request, utc_delta, utc_now
+from mm_std import utc_delta, utc_now
 
 from app.core.db import Protocol, Proxy, Status
 from app.core.types_ import AppService, AppServiceParams
