@@ -4,13 +4,13 @@ from mm_mongo import MongoDeleteResult, MongoUpdateResult
 from starlette.responses import PlainTextResponse
 
 from app.core.db import Source
-from app.server.deps import View
+from app.core.types import AppView
 
 router = APIRouter(prefix="/api/sources", tags=["source"])
 
 
 @cbv(router)
-class CBV(View):
+class CBV(AppView):
     @router.get("/export", response_class=PlainTextResponse)
     async def export_sources(self) -> str:
         return await self.core.services.source.export_as_toml()

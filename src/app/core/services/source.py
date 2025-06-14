@@ -3,7 +3,7 @@ import logging
 import re
 
 import pydash
-from mm_base6 import UserError
+from mm_base6 import BaseService, UserError
 from mm_base6.core.utils import toml_dumps, toml_loads
 from mm_concurrency import async_synchronized
 from mm_http import http_request
@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from pymongo.errors import BulkWriteError
 
 from app.core.db import Proxy, Source, Status
-from app.core.types_ import AppService, AppServiceParams
+from app.core.types import AppCore
 
 
 class Stats(BaseModel):
@@ -29,35 +29,35 @@ class Stats(BaseModel):
 logger = logging.getLogger(__name__)
 
 
-class SourceService(AppService):
-    def __init__(self, base_params: AppServiceParams) -> None:
-        super().__init__(base_params)
+class SourceService(BaseService):
+    core: AppCore
 
     async def create(self, id: str, link: str | None = None) -> MongoInsertOneResult:
-        return await self.db.source.insert_one(Source(id=id, link=link))
+        return await self.core.db.source.insert_one(Source(id=id, link=link))
 
     async def delete(self, id: str) -> MongoDeleteResult:
-        await self.db.proxy.delete_many({"source": id})
-        return await self.db.source.delete(id)
+        await self.core.db.proxy.delete_many({"source": id})
+        return await self.core.db.source.delete(id)
 
     async def calc_stats(self) -> Stats:
-        all_uniq_ip = await self.db.proxy.collection.distinct("ip", {})
-        ok_uniq_ip = await self.db.proxy.collection.distinct("ip", {"status": Status.OK})
-        live_uniq_ip = await self.db.proxy.collection.distinct(
-            "ip", {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dynamic_configs.live_last_ok_minutes)}}
+        all_uniq_ip = await self.core.db.proxy.collection.distinct("ip", {})
+        ok_uniq_ip = await self.core.db.proxy.collection.distinct("ip", {"status": Status.OK})
+        live_uniq_ip = await self.core.db.proxy.collection.distinct(
+            "ip",
+            {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.dynamic_configs.live_last_ok_minutes)}},
         )
 
         all_ = Stats.Count(all=len(all_uniq_ip), ok=len(ok_uniq_ip), live=len(live_uniq_ip))
         sources = {}
-        for source in await self.db.source.find({}, "_id"):
+        for source in await self.core.db.source.find({}, "_id"):
             sources[source.id] = Stats.Count(
-                all=await self.db.proxy.count({"source": source.id}),
-                ok=await self.db.proxy.count({"source": source.id, "status": Status.OK}),
-                live=await self.db.proxy.count(
+                all=await self.core.db.proxy.count({"source": source.id}),
+                ok=await self.core.db.proxy.count({"source": source.id, "status": Status.OK}),
+                live=await self.core.db.proxy.count(
                     {
                         "source": source.id,
                         "status": Status.OK,
-                        "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dynamic_configs.live_last_ok_minutes)},
+                        "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.dynamic_configs.live_last_ok_minutes)},
                     }
                 ),
             )
@@ -65,7 +65,7 @@ class SourceService(AppService):
 
     async def check(self, id: str) -> int:
         logger.debug("check source", extra={"id": id})
-        source = await self.db.source.get(id)
+        source = await self.core.db.source.get(id)
         urls = []
 
         # collect from items
@@ -88,15 +88,15 @@ class SourceService(AppService):
         proxies = [Proxy.new(id, url) for url in urls]
         if proxies:
             with contextlib.suppress(BulkWriteError):
-                await self.db.proxy.insert_many(proxies, ordered=False)
+                await self.core.db.proxy.insert_many(proxies, ordered=False)
 
-        await self.db.source.set(id, {"checked_at": utc_now()})
+        await self.core.db.source.set(id, {"checked_at": utc_now()})
 
         return len(proxies)
 
     @async_synchronized
     async def check_next(self) -> None:
-        source = await self.db.source.find_one(
+        source = await self.core.db.source.find_one(
             {"$or": [{"checked_at": None}, {"checked_at": {"$lt": utc_delta(hours=-1)}}]},
             "checked_at",
         )
@@ -104,7 +104,7 @@ class SourceService(AppService):
             await self.check(source.id)
 
     async def export_as_toml(self) -> str:
-        sources = [s.model_dump(exclude={"created_at", "checked_at"}) for s in await self.db.source.find({})]
+        sources = [s.model_dump(exclude={"created_at", "checked_at"}) for s in await self.core.db.source.find({})]
         sources = [pydash.rename_keys(s, {"_id": "id"}) for s in sources]
         return toml_dumps({"sources": sources})
 
@@ -116,7 +116,7 @@ class SourceService(AppService):
             raise UserError(f"Invalid toml data: {e}") from e
 
         for source in sources:
-            await self.db.source.set(source.id, source.model_dump(exclude={"_id"}), upsert=True)
+            await self.core.db.source.set(source.id, source.model_dump(exclude={"_id"}), upsert=True)
 
         return len(sources)
 

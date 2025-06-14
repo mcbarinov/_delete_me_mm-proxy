@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 from mm_base6 import DC, CoreConfig, DynamicConfigsModel, DynamicValuesModel, ServerConfig
 
+from app.core.types import AppCore
+
 core_config = CoreConfig()
 
 server_config = ServerConfig()
@@ -15,8 +17,22 @@ class DynamicConfigs(DynamicConfigsModel):
     proxy_check_timeout = DC(5.1, "timeout for proxy check")
 
 
-class DynamicSettings(DynamicValuesModel):
+class DynamicValues(DynamicValuesModel):
     pass
+
+
+def configure_scheduler(core: AppCore) -> None:
+    """Configure background scheduler tasks."""
+    core.scheduler.add_task("proxy_check", 1, core.services.proxy.check_next)
+    core.scheduler.add_task("source_check", 60, core.services.source.check_next)
+
+
+def start_core(core: AppCore) -> None:
+    """Startup logic for the application."""
+
+
+def stop_core(core: AppCore) -> None:
+    """Cleanup logic for the application."""
 
 
 def get_router() -> APIRouter:

@@ -8,13 +8,13 @@ from pydantic import BaseModel
 from starlette.responses import HTMLResponse, RedirectResponse
 
 from app.core.db import Protocol, Source, Status
-from app.server.deps import View
+from app.core.types import AppView
 
 router = APIRouter(include_in_schema=False)
 
 
 @cbv(router)
-class PageCBV(View):
+class PageCBV(AppView):
     @router.get("/")
     async def index(self) -> HTMLResponse:
         return await self.render.html("index.j2")
@@ -48,7 +48,7 @@ class PageCBV(View):
 
 
 @cbv(router)
-class ActionCBV(View):
+class ActionCBV(AppView):
     @router.post("/sources")
     async def create_source(self, id: Annotated[str, Form()], link: Annotated[str | None, Form()] = None) -> RedirectResponse:
         await self.core.db.source.insert_one(Source(id=id, link=link))

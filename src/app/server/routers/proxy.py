@@ -7,13 +7,13 @@ from mm_mongo import MongoUpdateResult
 from starlette.responses import JSONResponse, PlainTextResponse, Response
 
 from app.core.db import Protocol, Proxy
-from app.server.deps import View
+from app.core.types import AppView
 
 router = APIRouter(prefix="/api/proxies", tags=["proxy"])
 
 
 @cbv(router)
-class CBV(View):
+class CBV(AppView):
     @router.get("/live")
     async def get_live_proxies(
         self,

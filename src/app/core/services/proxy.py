@@ -4,30 +4,35 @@ import logging
 
 import pydash
 from bson import ObjectId
+from mm_base6 import BaseService
 from mm_concurrency import async_synchronized
 from mm_http import http_request
 from mm_mongo import MongoUpdateResult
 from mm_std import utc_delta, utc_now
 
 from app.core.db import Protocol, Proxy, Status
-from app.core.types_ import AppService, AppServiceParams
+from app.core.types import AppCore
 from app.core.utils import AsyncSlidingWindowCounter
 
 logger = logging.getLogger(__name__)
 
 
-class ProxyService(AppService):
-    def __init__(self, base_params: AppServiceParams) -> None:
-        super().__init__(base_params)
+class ProxyService(BaseService):
+    core: AppCore
+
+    def __init__(self) -> None:
+        super().__init__()
         self.counter = AsyncSlidingWindowCounter(window_seconds=60)  # how many proxy checks per minute
 
     async def check(self, id: ObjectId) -> dict[str, object]:
         # start = time.perf_counter()
-        proxy = await self.db.proxy.get(id)
+        proxy = await self.core.db.proxy.get(id)
 
         logger.debug("check proxy", extra={"id": proxy.id, "ip": proxy.ip})
 
-        status = Status.OK if await check_proxy(proxy.ip, proxy.url, self.dynamic_configs.proxy_check_timeout) else Status.DOWN
+        status = (
+            Status.OK if await check_proxy(proxy.ip, proxy.url, self.core.dynamic_configs.proxy_check_timeout) else Status.DOWN
+        )
 
         await self.counter.record_operation()
 
@@ -36,9 +41,9 @@ class ProxyService(AppService):
             updated["last_ok_at"] = utc_now()
         updated["check_history"] = ([status == Status.OK, *proxy.check_history])[:100]
 
-        updated_proxy = await self.db.proxy.set_and_get(id, updated)
+        updated_proxy = await self.core.db.proxy.set_and_get(id, updated)
         if updated_proxy.is_time_to_delete():
-            await self.db.proxy.delete(id)
+            await self.core.db.proxy.delete(id)
             updated["deleted"] = True
 
         # self.logger.debug("check proxy %s done in %.3f seconds", proxy.url, time.perf_counter() - start)
@@ -46,12 +51,12 @@ class ProxyService(AppService):
 
     @async_synchronized
     async def check_next(self) -> None:
-        if not self.dynamic_configs.proxies_check:
+        if not self.core.dynamic_configs.proxies_check:
             return
-        limit = self.dynamic_configs.max_proxies_check
-        proxies = await self.db.proxy.find({"checked_at": None}, limit=limit)
+        limit = self.core.dynamic_configs.max_proxies_check
+        proxies = await self.core.db.proxy.find({"checked_at": None}, limit=limit)
         if len(proxies) < limit:
-            proxies += await self.db.proxy.find(
+            proxies += await self.core.db.proxy.find(
                 {"checked_at": {"$lt": utc_delta(minutes=-5)}}, "checked_at", limit=limit - len(proxies)
             )
 
@@ -62,18 +67,23 @@ class ProxyService(AppService):
     async def get_live_proxies(
         self, sources: list[str] | None, protocol: Protocol | None = None, unique_ip: bool = False
     ) -> list[Proxy]:
-        query = {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.dynamic_configs.live_last_ok_minutes)}}
+        query = {
+            "status": Status.OK,
+            "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.dynamic_configs.live_last_ok_minutes)},
+        }
         if sources:
             query["source"] = {"$in": sources}
         if protocol:
             query["protocol"] = protocol.value
-        proxies = await self.db.proxy.find(query, "url")
+        proxies = await self.core.db.proxy.find(query, "url")
         if unique_ip:
             proxies = pydash.uniq_by(proxies, lambda p: p.ip)
         return proxies
 
     async def reset_all_proxies_status(self) -> MongoUpdateResult:
-        return await self.db.proxy.update_many({}, {"$set": {"status": Status.UNKNOWN, "checked_at": None, "last_ok_at": None}})
+        return await self.core.db.proxy.update_many(
+            {}, {"$set": {"status": Status.UNKNOWN, "checked_at": None, "last_ok_at": None}}
+        )
 
 
 async def check_proxy(ip: str, proxy: str, timeout: float) -> bool:

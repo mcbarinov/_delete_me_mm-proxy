@@ -1,9 +1,9 @@
 [project]
 name = "app"
-version = "0.6.2"
+version = "0.6.3"
 description = ""
 requires-python = ">=3.13"
-dependencies = ["mm-base6~=0.3.0","mm-std~=0.5.2"]
+dependencies = ["mm-base6~=0.4.0"]
 
 [build-system]
 requires = ["hatchling"]
