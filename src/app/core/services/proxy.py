@@ -30,9 +30,7 @@ class ProxyService(BaseService):
 
         logger.debug("check proxy", extra={"id": proxy.id, "ip": proxy.ip})
 
-        status = (
-            Status.OK if await check_proxy(proxy.ip, proxy.url, self.core.dynamic_configs.proxy_check_timeout) else Status.DOWN
-        )
+        status = Status.OK if await check_proxy(proxy.ip, proxy.url, self.core.settings.proxy_check_timeout) else Status.DOWN
 
         await self.counter.record_operation()
 
@@ -51,9 +49,9 @@ class ProxyService(BaseService):
 
     @async_synchronized
     async def check_next(self) -> None:
-        if not self.core.dynamic_configs.proxies_check:
+        if not self.core.settings.proxies_check:
             return
-        limit = self.core.dynamic_configs.max_proxies_check
+        limit = self.core.settings.max_proxies_check
         proxies = await self.core.db.proxy.find({"checked_at": None}, limit=limit)
         if len(proxies) < limit:
             proxies += await self.core.db.proxy.find(
@@ -69,7 +67,7 @@ class ProxyService(BaseService):
     ) -> list[Proxy]:
         query = {
             "status": Status.OK,
-            "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.dynamic_configs.live_last_ok_minutes)},
+            "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.settings.live_last_ok_minutes)},
         }
         if sources:
             query["source"] = {"$in": sources}

@@ -44,7 +44,7 @@ class SourceService(BaseService):
         ok_uniq_ip = await self.core.db.proxy.collection.distinct("ip", {"status": Status.OK})
         live_uniq_ip = await self.core.db.proxy.collection.distinct(
             "ip",
-            {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.dynamic_configs.live_last_ok_minutes)}},
+            {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.settings.live_last_ok_minutes)}},
         )
 
         all_ = Stats.Count(all=len(all_uniq_ip), ok=len(ok_uniq_ip), live=len(live_uniq_ip))
@@ -57,7 +57,7 @@ class SourceService(BaseService):
                     {
                         "source": source.id,
                         "status": Status.OK,
-                        "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.dynamic_configs.live_last_ok_minutes)},
+                        "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.settings.live_last_ok_minutes)},
                     }
                 ),
             )
