@@ -4,7 +4,7 @@ import logging
 
 import pydash
 from bson import ObjectId
-from mm_base6 import BaseService
+from mm_base6 import Service
 from mm_concurrency import async_synchronized
 from mm_http import http_request
 from mm_mongo import MongoUpdateResult
@@ -17,7 +17,7 @@ from app.core.utils import AsyncSlidingWindowCounter
 logger = logging.getLogger(__name__)
 
 
-class ProxyService(BaseService):
+class ProxyService(Service):
     core: AppCore
 
     def __init__(self) -> None:

@@ -94,7 +94,7 @@ wheels = [
 
 [[package]]
 name = "app"
-version = "0.7.0"
+version = "0.7.1"
 source = { editable = "." }
 dependencies = [
     { name = "mm-base6" },
@@ -113,7 +113,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "mm-base6", specifier = "~=0.5.0" }]
+requires-dist = [{ name = "mm-base6", specifier = "~=0.5.1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -515,7 +515,7 @@ wheels = [
 
 [[package]]
 name = "mm-base6"
-version = "0.5.0"
+version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
@@ -530,9 +530,9 @@ dependencies = [
     { name = "tomlkit" },
     { name = "uvloop" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/73/ab/ccc54cce08f3dd260e7b679707e5d10a45d4b2d633b913515be40f63093f/mm_base6-0.5.0.tar.gz", hash = "sha256:ddb899bab77fc6205249a39361ecbc1a8095e3b1509725514d00c3b54420a7ac", size = 168736, upload-time = "2025-06-18T06:43:50.699Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/70/fb846e21963ceba0e143b6b0ccbec8decc109afc2ae6eb5a18fec006621f/mm_base6-0.5.1.tar.gz", hash = "sha256:b51e212bd968394f0042c7f57c1c7129f02f52b1b66d532db65b586258d14e4e", size = 168676, upload-time = "2025-06-18T10:01:31.235Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/25/6303f42f98f8ae5b4154689950f3fcbea50a0443296923d180241f4e4337/mm_base6-0.5.0-py3-none-any.whl", hash = "sha256:57f1c8ec33df46217e4d2b42a6284617023c136998224886b8b3b65517f8a93a", size = 59181, upload-time = "2025-06-18T06:43:48.952Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/92/4fd9e0b56b25d77cc557438a54f45c5b88d650e0000ca6cd007186e968cb/mm_base6-0.5.1-py3-none-any.whl", hash = "sha256:ac823e677edbf29ab7a99d49ebaa614a8b0db8aa42862b932c45351182c22b10", size = 59128, upload-time = "2025-06-18T10:01:29.796Z" },
 ]
 
 [[package]]
@@ -573,15 +573,15 @@ wheels = [
 
 [[package]]
 name = "mm-mongo"
-version = "0.5.9"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "pymongo" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f0/9e/6c2bdc9cd0afd3f691df3ce37d3ca57ec4f9d7b234237bcafd36d460ab2f/mm_mongo-0.5.9.tar.gz", hash = "sha256:abd2e475a1c150c3a6084ff1dea9fc9336b173159152b9acbf5fee53a9005f3e", size = 33558, upload-time = "2025-06-16T14:58:30.7Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/75/7db699ae443a58a578d7b328c340f6d03f37695c1e55d3abd741cf0bc315/mm_mongo-0.6.0.tar.gz", hash = "sha256:06251aed1557a2b465ff0f920852d9fe1ca2cc539927c513eba713147d95adca", size = 33750, upload-time = "2025-06-18T09:37:32.755Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/13/1cf4d380a54fc34ebafadce5ccf49cdf8e3cb861add10c9fcd203fa57516/mm_mongo-0.5.9-py3-none-any.whl", hash = "sha256:9f09bb93080770b5302bb18333926b847eb8d009b4c97d066e8faad5360c0fd5", size = 10521, upload-time = "2025-06-16T14:58:29.41Z" },
+    { url = "https://files.pythonhosted.org/packages/73/ec/d4ec9f81580b46ceb4413a168c759c72ed3278e8ff99557e67298b37dc2d/mm_mongo-0.6.0-py3-none-any.whl", hash = "sha256:af86e7a504defcbf0d1b5ab4a49710f368027559d77634344d2e35a7387fe2f6", size = 10649, upload-time = "2025-06-18T09:37:31.759Z" },
 ]
 
 [[package]]

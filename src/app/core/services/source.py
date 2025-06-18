@@ -3,7 +3,7 @@ import logging
 import re
 
 import pydash
-from mm_base6 import BaseService, UserError
+from mm_base6 import Service, UserError
 from mm_base6.core.utils import toml_dumps, toml_loads
 from mm_concurrency import async_synchronized
 from mm_http import http_request
@@ -29,7 +29,7 @@ class Stats(BaseModel):
 logger = logging.getLogger(__name__)
 
 
-class SourceService(BaseService):
+class SourceService(Service):
     core: AppCore
 
     async def create(self, id: str, link: str | None = None) -> MongoInsertOneResult:

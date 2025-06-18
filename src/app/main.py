@@ -2,7 +2,7 @@ import asyncio
 
 from mm_base6 import Core, run
 
-from app import config
+from app import config, telegram_handlers
 from app.core.db import Db
 from app.core.services import ServiceRegistry
 from app.server import jinja
@@ -21,7 +21,7 @@ async def main() -> None:
     await run(
         core=core,
         server_config=config.server_config,
-        telegram_handlers=None,
+        telegram_handlers=telegram_handlers.handlers,
         jinja_config=jinja.jinja_config,
         host="0.0.0.0",  # noqa: S104 # nosec
         port=3000,

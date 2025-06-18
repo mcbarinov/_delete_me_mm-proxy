@@ -25,8 +25,10 @@ lint: format
     uv run mypy src
 
 audit:
-    uv run pip-audit
-    uv run bandit -r -c "pyproject.toml" src
+    uv export --no-dev --all-extras --format requirements-txt --no-emit-project > requirements.txt
+    uv run pip-audit -r requirements.txt --disable-pip
+    rm requirements.txt
+    uv run bandit --silent --recursive --configfile "pyproject.toml" src
 
 test:
     uv run pytest tests
