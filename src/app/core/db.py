@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum, unique
+from enum import Enum, StrEnum, unique
 from urllib.parse import urlparse
 
 from bson import ObjectId
@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 @unique
-class Protocol(str, Enum):
+class Protocol(StrEnum):
     HTTP = "http"
     SOCKS5 = "socks5"
 
@@ -46,7 +46,7 @@ class Source(MongoModel[str]):
 
 
 @unique
-class Status(str, Enum):
+class Status(StrEnum):
     UNKNOWN = "UNKNOWN"
     OK = "OK"
     DOWN = "DOWN"

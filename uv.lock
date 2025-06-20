@@ -94,7 +94,7 @@ wheels = [
 
 [[package]]
 name = "app"
-version = "0.7.2"
+version = "0.7.3"
 source = { editable = "." }
 dependencies = [
     { name = "mm-base6" },
@@ -113,7 +113,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "mm-base6", specifier = "~=0.5.2" }]
+requires-dist = [{ name = "mm-base6", specifier = "~=0.6.1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -515,7 +515,7 @@ wheels = [
 
 [[package]]
 name = "mm-base6"
-version = "0.5.2"
+version = "0.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
@@ -528,11 +528,12 @@ dependencies = [
     { name = "psutil" },
     { name = "pydantic-settings" },
     { name = "tomlkit" },
+    { name = "urllib3" },
     { name = "uvloop" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/68/ba/b82c56fe1a5444d0aaa3c3cad0745422ed96541237c6be34a6e4033a4ef6/mm_base6-0.5.2.tar.gz", hash = "sha256:aa2aaf2df30a32644bd32f69c0ffb145c52e29db2e0254f01000d8c54cb16ef8", size = 168681, upload-time = "2025-06-18T14:27:40.226Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/4e/8fe269ee53ceaa1d53e2c11f97aaea4cf244ffef49b97c02d7871a5ec8fb/mm_base6-0.6.1.tar.gz", hash = "sha256:f6a807078f1b82492b3867e4304cf6d9b057bf84c6e1730fca236a57ebd22027", size = 161046, upload-time = "2025-06-20T11:05:46.882Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/94/32c646b273880dd4bea8392ce7b070d32756122d6c3c4a3c4c2631ae3e1c/mm_base6-0.5.2-py3-none-any.whl", hash = "sha256:fb0deaf65dc168aceff46bc706310864bc3b7e03403b1de324409a777b8cdb2d", size = 59199, upload-time = "2025-06-18T14:27:38.668Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/ad/e2d7d78bb25f5cabfc961af53138f2a16b8aef463d9025986074c605d337/mm_base6-0.6.1-py3-none-any.whl", hash = "sha256:838c220bd0e685f1e7fc683bac56b7e4158b0350c71480affc4619d7ca7fa656", size = 51770, upload-time = "2025-06-20T11:05:45.342Z" },
 ]
 
 [[package]]
@@ -1295,11 +1296,11 @@ wheels = [
 
 [[package]]
 name = "urllib3"
-version = "2.3.0"
+version = "2.5.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/aa/63/e53da845320b757bf29ef6a9062f5c669fe997973f966045cb019c3f4b66/urllib3-2.3.0.tar.gz", hash = "sha256:f8c5449b3cf0861679ce7e0503c7b44b5ec981bec0d1d3795a07f1ba96f0204d", size = 307268, upload-time = "2024-12-22T07:47:30.032Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/22/9ee70a2574a4f4599c47dd506532914ce044817c7752a79b6a51286319bc/urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760", size = 393185, upload-time = "2025-06-18T14:07:41.644Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c8/19/4ec628951a74043532ca2cf5d97b7b14863931476d117c471e8e2b1eb39f/urllib3-2.3.0-py3-none-any.whl", hash = "sha256:1cee9ad369867bfdbbb48b7dd50374c0967a0bb7710050facf0dd6911440e3df", size = 128369, upload-time = "2024-12-22T07:47:28.074Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/c2/fe1e52489ae3122415c51f387e221dd0773709bad6c6cdaa599e8a2c5185/urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc", size = 129795, upload-time = "2025-06-18T14:07:40.39Z" },
 ]
 
 [[package]]

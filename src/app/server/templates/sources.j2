@@ -1,44 +1,33 @@
 {% extends "inc/base.j2" %}
 {% block content %}
 
-  <nav>
-    <ul>
-      <li><h3>sources</h3></li>
-      <li>
-        <a onclick="toggleModal(event)" data-target="modal-create" class="outline" role="button">create</a>
-      </li>
-      <li>
-        <a href="/api/sources/export" class="outline" role="button">export</a>
-      </li>
-      <li>
-        <a onclick="toggleModal(event)" data-target="modal-import" class="outline" role="button">import</a>
-      </li>
-    </ul>
-    <dialog id="modal-create">
-      <article>
-        <form method="POST">
-          <fieldset role="group">
-            <input type="text" name="id" placeholder="id" required>
-            <input type="text" name="link" placeholder="link">
-            <input type="submit" value="create">
-          </fieldset>
-        </form>
-      </article>
-    </dialog>
+<div class="page-header">
+  <h2>sources</h2>
+  <sl-divider vertical></sl-divider>
+  <sl-button-group>
+    <sl-button onclick="document.querySelector('#dialog-create').show()">create</sl-button>
+    <sl-button href="/api/sources/export">export</sl-button>
+    <sl-button onclick="document.querySelector('#dialog-import').show()">import</sl-button>
+  </sl-button-group>
+</div>
 
-    <dialog id="modal-import">
-      <article>
-        <form method="POST" action="/sources/import">
-          <textarea name="toml" rows="10" placeholder="sources as toml" required></textarea>
-          <input type="submit" value="import">
-        </form>
-      </article>
-    </dialog>
-  </nav>
+<sl-dialog id="dialog-create" label="create source">
+  <form method="POST" class="stack">
+    <sl-input type="text" name="id" placeholder="id" required></sl-input>
+    <sl-input type="text" name="link" placeholder="link"></sl-input>
+    <sl-button type="submit" variant="primary">create</sl-button>
+  </form>
+</sl-dialog>
 
+<sl-dialog id="dialog-import" label="import sources">
+  <form method="POST" action="/sources/import" class="stack">
+    <sl-textarea name="toml" rows="10" placeholder="sources as toml" required></sl-textarea>
+    <sl-button type="submit" variant="primary">import</sl-button>
+  </form>
+</sl-dialog>
 
-  <table>
-    <thead>
+<table>
+  <thead>
     <tr>
       <th>id</th>
       <th>link</th>
@@ -50,65 +39,63 @@
       <th>checked_at</th>
       <th>actions</th>
     </tr>
-    </thead>
-    <tbody>
+  </thead>
+  <tbody>
     {% for s in sources %}
-      <tr>
-        <td>{{ s.id }}</td>
-        <td>{{ s.link | empty }}</td>
-        <td>{{ s.items | length }}</td>
-        <td>{{ 'default' if s.default }}</td>
-        <td>{{ stats.sources[s.id].all }}</td>
-        <td>{{ stats.sources[s.id].ok }}</td>
-        <td>{{ stats.sources[s.id].live }}</td>
-        <td>{{ s.checked_at | dt }}</td>
-        <td>
-          <details class="dropdown">
-            <summary>actions</summary>
-            <ul>
-              <li><a onclick="toggleModal(event)" data-target="modal-items-{{ s.id }}">items</a></li>
-              <li><a onclick="toggleModal(event)" data-target="modal-default-{{ s.id }}">default</a></li>
-              <li><a href="/api-delete/sources/{{ s.id }}/proxies" {{ confirm }}>delete proxies</a></li>
-              <li><a href="/api-post/sources/{{ s.id }}/check">check</a></li>
-              <li><a href="/api-delete/sources/{{ s.id }}" {{ confirm }}>delete</a></li>
-              <li><a href="/api/sources/{{ s.id }}">view</a></li>
-            </ul>
-          </details>
-          <dialog id="modal-items-{{ s.id }}">
-            <article>
-              <header>set items / {{ s.id }}</header>
-              <form method="POST" action="/sources/{{ s.id }}/items">
-                <textarea name="items" rows="10">{{ s.items | join("\n") }}</textarea>
-                <input type="submit" value="save">
-              </form>
-            </article>
-          </dialog>
-          <dialog id="modal-default-{{ s.id }}">
-            <article>
-              <header>set default / {{ s.id }}</header>
-              <form method="POST" action="/sources/{{ s.id }}/default">
-                <select name="protocol" required>
-                  <option value="" disabled selected>protocol...</option>
-                  <option value="http" {{ "selected" if s.default.protocol == "http" }}>http</option>
-                  <option value="socks5" {{ "selected" if s.default.protocol == "socks5" }}>socks5</option>
-                </select>
-                <input type="text" name="username" placeholder="username" value="{{ s.default.username }}">
-                <input type="text" name="password" placeholder="password" value="{{ s.default.password }}">
-                <input type="number" name="port" placeholder="port" value="{{ s.default.port }}" required>
-                <input type="submit" value="save">
-              </form>
-              <footer>
-                <a href="/api-delete/sources/{{ s.id }}/default" {{ confirm }}>clear default</a>
-              </footer>
-            </article>
-          </dialog>
-        </td>
-      </tr>
+    <tr>
+      <td>{{ s.id }}</td>
+      <td>{{ s.link | empty }}</td>
+      <td>{{ s.items | length }}</td>
+      <td>{{ 'default' if s.default }}</td>
+      <td>{{ stats.sources[s.id].all }}</td>
+      <td>{{ stats.sources[s.id].ok }}</td>
+      <td>{{ stats.sources[s.id].live }}</td>
+      <td>{{ s.checked_at | dt }}</td>
+      <td>
+        <sl-dropdown>
+          <sl-button slot="trigger" caret>actions</sl-button>
+          <sl-menu>
+            <sl-menu-item><a
+                onclick="document.querySelector('#dialog-items-{{ s.id }}').show()">items</a></sl-menu-item>
+            <sl-menu-item><a
+                onclick="document.querySelector('#dialog-default-{{ s.id }}').show()">default</a></sl-menu-item>
+            <sl-menu-item><a href="/api-delete/sources/{{ s.id }}/proxies" {{ confirm }}>delete
+                proxies</a></sl-menu-item>
+            <sl-menu-item><a href="/api-post/sources/{{ s.id }}/check">check</a></sl-menu-item>
+            <sl-menu-item><a href="/api-delete/sources/{{ s.id }}" {{ confirm }}>delete</a></sl-menu-item>
+            <sl-menu-item><a href="/api/sources/{{ s.id }}">view</a></sl-menu-item>
+            <sl-menu-item></sl-menu-item>
+            <sl-menu-item></sl-menu-item>
+            <sl-menu-item></sl-menu-item>
+            <sl-menu-item></sl-menu-item>
+            <sl-menu-item></sl-menu-item>
+            <sl-menu-item></sl-menu-item>
+          </sl-menu>
+        </sl-dropdown>
+        <sl-dialog id="dialog-items-{{ s.id }}" label="set items / {{ s.id }}">
+          <form method="POST" action="/sources/{{ s.id }}/items" class="stack">
+            <sl-textarea name="items" rows="10" value="{{ s.items | join(" \n") }}"></sl-textarea>
+            <sl-button type="submit" variant="primary">save</sl-button>
+          </form>
+        </sl-dialog>
+        <sl-dialog id="dialog-default-{{ s.id }}" label="set default / {{ s.id }}">
+          <form method="POST" action="/sources/{{ s.id }}/default" class="stack">
+            <sl-select name="protocol" required value="{{ s.default and s.default.protocol }}" placeholder="protocol">
+              <sl-option value="http">http</sl-option>
+              <sl-option value="socks5">socks5</sl-option>
+            </sl-select>
+            <sl-input type="text" name="username" placeholder="username" value="{{ s.default.username }}"></sl-input>
+            <sl-input type="text" name="password" placeholder="password" value="{{ s.default.password }}"></sl-input>
+            <sl-input type="number" name="port" placeholder="port" value="{{ s.default.port }}" required></sl-input>
+            <sl-button type="submit" variant="primary">save</sl-button>
+          </form>
+          <sl-divider></sl-divider>
+          <sl-button href="/api-delete/sources/{{ s.id }}/default" {{ confirm }}>clear default</sl-button>
+        </sl-dialog>
+      </td>
+    </tr>
     {% endfor %}
-    </tbody>
-  </table>
-
-
-
+  </tbody>
+</table>
 
 {% endblock %}
