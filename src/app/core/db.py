@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum, StrEnum, unique
+from enum import StrEnum, unique
 from urllib.parse import urlparse
 
 from bson import ObjectId
