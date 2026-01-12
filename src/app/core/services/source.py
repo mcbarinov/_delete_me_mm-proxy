@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import re
+from dataclasses import dataclass
 
 import pydash
 from mm_base6 import Service, UserError
@@ -12,7 +13,7 @@ from mm_std import utc_delta, utc_now
 from pydantic import BaseModel
 from pymongo.errors import BulkWriteError
 
-from app.core.db import Proxy, Source, Status
+from app.core.db import Proxy, ProxyType, Source, Status
 from app.core.types import AppCore
 
 
@@ -41,11 +42,15 @@ class SourceService(Service[AppCore]):
         return await self.core.db.source.delete(id)
 
     async def calc_stats(self) -> Stats:
-        all_uniq_ip = await self.core.db.proxy.collection.distinct("ip", {})
-        ok_uniq_ip = await self.core.db.proxy.collection.distinct("ip", {"status": Status.OK})
+        all_uniq_ip = await self.core.db.proxy.collection.distinct("proxy_ip", {"proxy_ip": {"$ne": None}})
+        ok_uniq_ip = await self.core.db.proxy.collection.distinct("proxy_ip", {"status": Status.OK, "proxy_ip": {"$ne": None}})
         live_uniq_ip = await self.core.db.proxy.collection.distinct(
-            "ip",
-            {"status": Status.OK, "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.settings.live_last_ok_minutes)}},
+            "proxy_ip",
+            {
+                "status": Status.OK,
+                "proxy_ip": {"$ne": None},
+                "last_ok_at": {"$gt": utc_delta(minutes=-1 * self.core.settings.live_last_ok_minutes)},
+            },
         )
 
         all_ = Stats.Count(all=len(all_uniq_ip), ok=len(ok_uniq_ip), live=len(live_uniq_ip))
@@ -82,11 +87,14 @@ class SourceService(Service[AppCore]):
             if res.is_err():
                 logger.warning("Failed to fetch source link", extra={"link": source.link, "response": res.model_dump()})
                 return 0
-            ip_addresses = parse_ipv4_addresses(res.body or "")
-            new_urls = [source.default.url(item) for item in ip_addresses]
-            urls.extend(new_urls)
+            for ep in parse_proxy_endpoints(res.body or ""):
+                if ep.url:
+                    urls.append(ep.url)
+                elif ep.ip:
+                    urls.append(source.default.url(ep.ip, ep.port))
 
-        proxies = [Proxy.new(id, url) for url in urls]
+        proxy_type = source.default.proxy_type if source.default else ProxyType.DIRECT
+        proxies = [Proxy.new(id, url, proxy_type) for url in urls]
         if proxies:
             with contextlib.suppress(BulkWriteError):
                 await self.core.db.proxy.insert_many(proxies, ordered=False)
@@ -122,11 +130,41 @@ class SourceService(Service[AppCore]):
         return len(sources)
 
 
-def parse_ipv4_addresses(data: str) -> set[str]:
-    result = set()
+@dataclass
+class ParsedEndpoint:
+    url: str | None = None  # full URL (protocol://usr:pass@host:port)
+    ip: str | None = None  # IP address (for partial formats)
+    port: int | None = None  # port (for ip:port format)
+
+
+def parse_proxy_endpoints(data: str) -> list[ParsedEndpoint]:
+    """Parse proxy endpoints from text.
+
+    Supported formats:
+    - protocol://usr:pass@host:port → ParsedEndpoint(url=...)
+    - 1.2.3.4:8080 → ParsedEndpoint(ip="1.2.3.4", port=8080)
+    - 1.2.3.4 → ParsedEndpoint(ip="1.2.3.4")
+    """
+    result = []
     for line in data.split("\n"):
-        line = line.lower().strip()  # noqa: PLW2901
-        m = re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", line)
+        line = line.strip()  # noqa: PLW2901
+        if not line:
+            continue
+
+        # Full URL
+        if line.startswith(("http://", "socks5://")):
+            result.append(ParsedEndpoint(url=line))
+            continue
+
+        # IP:port
+        m = re.match(r"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)$", line)
         if m:
-            result.add(line)
+            result.append(ParsedEndpoint(ip=m.group(1), port=int(m.group(2))))
+            continue
+
+        # Pure IP
+        m = re.match(r"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$", line)
+        if m:
+            result.append(ParsedEndpoint(ip=m.group(1)))
+
     return result

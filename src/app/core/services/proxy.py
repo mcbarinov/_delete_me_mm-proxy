@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+from urllib.parse import urlparse
 
 import pydash
 from bson import ObjectId
@@ -10,7 +11,7 @@ from mm_http import http_request
 from mm_mongo import MongoUpdateResult
 from mm_std import utc_delta, utc_now
 
-from app.core.db import Protocol, Proxy, Status
+from app.core.db import Protocol, Proxy, ProxyType, Status
 from app.core.types import AppCore
 from app.core.utils import AsyncSlidingWindowCounter
 
@@ -22,31 +23,60 @@ class ProxyService(Service[AppCore]):
         super().__init__()
         self.counter = AsyncSlidingWindowCounter(window_seconds=60)  # how many proxy checks per minute
 
+    async def on_startup(self) -> None:
+        await self.refresh_own_ip()
+
     def configure_scheduler(self) -> None:
         self.core.scheduler.add_task("proxy_check", 1, self.core.services.proxy.check_next)
 
+    async def refresh_own_ip(self) -> str | None:
+        res = await http_request("https://api.ipify.org/?format=json", timeout=10)
+        ip: str | None = res.parse_json("ip", none_on_error=True)
+        if ip:
+            self.core.state.own_ip = ip
+            logger.info("own_ip detected: %s", ip)
+        return ip
+
     async def check(self, id: ObjectId) -> dict[str, object]:
-        # start = time.perf_counter()
         proxy = await self.core.db.proxy.get(id)
+        logger.debug("check proxy", extra={"id": proxy.id, "url": proxy.url})
 
-        logger.debug("check proxy", extra={"id": proxy.id, "ip": proxy.ip})
-
-        status = Status.OK if await check_proxy(proxy.ip, proxy.url, self.core.settings.proxy_check_timeout) else Status.DOWN
+        response_ip = await get_proxy_response_ip(proxy.url, self.core.settings.proxy_check_timeout)
+        success, proxy_ip = self._validate_proxy_response(proxy, response_ip)
 
         await self.counter.record_operation()
 
-        updated = {"status": status, "checked_at": utc_now()}
-        if status == Status.OK:
+        status = Status.OK if success else Status.DOWN
+        updated: dict[str, object] = {"status": status, "checked_at": utc_now()}
+        if success:
             updated["last_ok_at"] = utc_now()
-        updated["check_history"] = ([status == Status.OK, *proxy.check_history])[:100]
+            if proxy_ip:
+                updated["proxy_ip"] = proxy_ip
+        updated["check_history"] = ([success, *proxy.check_history])[:100]
 
         updated_proxy = await self.core.db.proxy.set_and_get(id, updated)
         if updated_proxy.is_time_to_delete():
             await self.core.db.proxy.delete(id)
             updated["deleted"] = True
 
-        # self.logger.debug("check proxy %s done in %.3f seconds", proxy.url, time.perf_counter() - start)
         return updated
+
+    def _validate_proxy_response(self, proxy: Proxy, response_ip: str | None) -> tuple[bool, str | None]:
+        if not response_ip:
+            return False, None
+
+        # Protection: if response is our own IP — proxy is not working
+        if response_ip == self.core.state.own_ip:
+            return False, None
+
+        if proxy.type == ProxyType.DIRECT:
+            # For direct: verify IP matches hostname from URL
+            expected_ip = urlparse(proxy.url).hostname
+            if response_ip != expected_ip:
+                return False, None
+
+        # Gateway: any IP (except our own) = OK
+        return True, response_ip
 
     @async_synchronized
     async def check_next(self) -> None:
@@ -76,7 +106,10 @@ class ProxyService(Service[AppCore]):
             query["protocol"] = protocol.value
         proxies = await self.core.db.proxy.find(query, "url")
         if unique_ip:
-            proxies = pydash.uniq_by(proxies, lambda p: p.ip)
+            with_ip = [p for p in proxies if p.proxy_ip]
+            without_ip = [p for p in proxies if not p.proxy_ip]
+            unique_with_ip = pydash.uniq_by(with_ip, lambda p: p.proxy_ip)
+            proxies = unique_with_ip + without_ip
         return proxies
 
     async def reset_all_proxies_status(self) -> MongoUpdateResult:
@@ -85,24 +118,23 @@ class ProxyService(Service[AppCore]):
         )
 
 
-async def check_proxy(ip: str, proxy: str, timeout: float) -> bool:
+async def get_proxy_response_ip(proxy: str, timeout: float) -> str | None:
     tasks = [
-        asyncio.create_task(httpbin_check(ip, proxy, timeout)),
-        asyncio.create_task(ipify_check(ip, proxy, timeout)),
+        asyncio.create_task(httpbin_get_ip(proxy, timeout)),
+        asyncio.create_task(ipify_get_ip(proxy, timeout)),
     ]
     try:
         for task in asyncio.as_completed(tasks):
             result = await task
             if result:
-                for t in tasks:  # Cancel all others if any result is True
+                for t in tasks:
                     if not t.done():
                         t.cancel()
                         with contextlib.suppress(asyncio.CancelledError):
                             await t
-                return True
-        return False
-    # I don't understand why this is needed :(
-    finally:  # Cleanup: just in case, ensure all tasks are cleaned up
+                return result
+        return None
+    finally:
         for t in tasks:
             if not t.done():
                 t.cancel()
@@ -110,11 +142,13 @@ async def check_proxy(ip: str, proxy: str, timeout: float) -> bool:
                     await t
 
 
-async def httpbin_check(ip: str, proxy: str, timeout: float) -> bool:
+async def httpbin_get_ip(proxy: str, timeout: float) -> str | None:
     res = await http_request("https://httpbin.org/ip", proxy=proxy, timeout=timeout)
-    return res.parse_json("origin", none_on_error=True) == ip  # type:ignore[no-any-return]
+    ip: str | None = res.parse_json("origin", none_on_error=True)
+    return ip
 
 
-async def ipify_check(ip: str, proxy: str, timeout: float) -> bool:
+async def ipify_get_ip(proxy: str, timeout: float) -> str | None:
     res = await http_request("https://api.ipify.org/?format=json", proxy=proxy, timeout=timeout)
-    return res.parse_json("ip", none_on_error=True) == ip  # type:ignore[no-any-return]
+    ip: str | None = res.parse_json("ip", none_on_error=True)
+    return ip

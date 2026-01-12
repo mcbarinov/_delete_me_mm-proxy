@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from mm_base6 import BaseSettings, BaseState, Config, setting_field
+from mm_base6 import BaseSettings, BaseState, Config, setting_field, state_field
 
 config = Config(openapi_tags=["source", "proxy"], ui_menu={"/bot": "bot", "/sources": "sources", "/proxies": "proxies"})
 
@@ -13,4 +13,4 @@ class Settings(BaseSettings):
 
 
 class State(BaseState):
-    pass
+    own_ip: Annotated[str | None, state_field(None, "detected own public IP address")]

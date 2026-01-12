@@ -28,7 +28,9 @@
 <table class="sortable">
   <thead>
     <tr>
-      <th>ip</th>
+      <th>endpoint</th>
+      <th>proxy_ip</th>
+      <th>type</th>
       <th>status</th>
       <th>source</th>
       <th>protocol</th>
@@ -43,7 +45,9 @@
   <tbody>
     {% for p in proxies %}
     <tr>
-      <td>{{ p.ip }}</td>
+      <td>{{ p.endpoint }}</td>
+      <td>{{ p.proxy_ip | empty }}</td>
+      <td>{{ p.type.value }}</td>
       <td>{{ p.status.value }}</td>
       <td>{{ p.source }}</td>
       <td>{{ p.protocol.value }}</td>
@@ -51,7 +55,7 @@
       <td>{{ p.history_down_count }}</td>
       <td>{{ p.checked_at | dt }}</td>
       <td><sl-button href="/api-post/proxies/{{ p.id }}/check">check</sl-button></td>
-      <td><sl-button href="/api/proxies/{{ p.id }}/url">view</sl-button></td>
+      <td><sl-button href="/api/proxies/{{ p.id }}/url">url</sl-button></td>
       <td><sl-button href="/api/proxies/{{ p.id }}">view</sl-button></td>
     </tr>
     {% endfor %}

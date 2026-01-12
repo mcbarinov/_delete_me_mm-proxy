@@ -7,7 +7,7 @@ from mm_std import parse_lines, replace_empty_dict_entries
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse, RedirectResponse
 
-from app.core.db import Protocol, Source, Status
+from app.core.db import Protocol, ProxyType, Source, Status
 from app.core.types import AppView
 
 router = APIRouter(include_in_schema=False)
@@ -38,7 +38,7 @@ class PageCBV(AppView):
         protocol: Annotated[str | None, Query()] = None,
     ) -> HTMLResponse:
         query = replace_empty_dict_entries({"source": source, "status": status, "protocol": protocol})
-        proxies = await self.core.db.proxy.find(query, "ip")
+        proxies = await self.core.db.proxy.find(query, "proxy_ip")
         sources = [s.id for s in await self.core.db.source.find({}, "_id")]
         statuses = [s.value for s in list(Status)]
         protocols = [p.value for p in list(Protocol)]
@@ -69,6 +69,7 @@ class ActionCBV(AppView):
 
     class SetDefaultForm(BaseModel):
         protocol: Protocol
+        proxy_type: ProxyType
         username: str
         password: str
         port: int
