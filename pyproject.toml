@@ -1,28 +1,28 @@
 [project]
 name = "app"
-version = "0.7.4"
+version = "0.7.5"
 description = ""
-requires-python = ">=3.13"
-dependencies = ["mm-base6~=0.6.2"]
+requires-python = ">=3.14"
+dependencies = ["mm-base6~=0.7.0"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-dev-dependencies = [
-    "pytest~=8.4.1",
+[dependency-groups]
+dev = [
+    "bandit~=1.9.2",
+    "mypy~=1.19.1",
+    "pip-audit~=2.10.0",
+    "pytest~=9.0.2",
     "pytest-xdist~=3.8.0",
     "pytest-httpserver~=1.1.3",
-    "ruff~=0.12.3",
-    "pip-audit~=2.9.0",
-    "bandit~=1.8.6",
-    "mypy~=1.17.0",
+    "ruff~=0.14.11",
     "watchfiles~=1.1.0",
 ]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 mypy_path = "stubs"
 warn_no_return = false
 strict = true
@@ -32,7 +32,7 @@ exclude = ["^tests/", "^cookiecutter", "^demo/"]
 
 [tool.ruff]
 line-length = 130
-target-version = "py313"
+target-version = "py314"
 exclude = ["demo/", "cookiecutter/"]
 [tool.ruff.lint]
 select = ["ALL"]

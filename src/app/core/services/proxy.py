@@ -17,12 +17,13 @@ from app.core.utils import AsyncSlidingWindowCounter
 logger = logging.getLogger(__name__)
 
 
-class ProxyService(Service):
-    core: AppCore
-
+class ProxyService(Service[AppCore]):
     def __init__(self) -> None:
         super().__init__()
         self.counter = AsyncSlidingWindowCounter(window_seconds=60)  # how many proxy checks per minute
+
+    def configure_scheduler(self) -> None:
+        self.core.scheduler.add_task("proxy_check", 1, self.core.services.proxy.check_next)
 
     async def check(self, id: ObjectId) -> dict[str, object]:
         # start = time.perf_counter()
@@ -111,9 +112,9 @@ async def check_proxy(ip: str, proxy: str, timeout: float) -> bool:
 
 async def httpbin_check(ip: str, proxy: str, timeout: float) -> bool:
     res = await http_request("https://httpbin.org/ip", proxy=proxy, timeout=timeout)
-    return res.parse_json_body("origin", none_on_error=True) == ip  # type:ignore[no-any-return]
+    return res.parse_json("origin", none_on_error=True) == ip  # type:ignore[no-any-return]
 
 
 async def ipify_check(ip: str, proxy: str, timeout: float) -> bool:
     res = await http_request("https://api.ipify.org/?format=json", proxy=proxy, timeout=timeout)
-    return res.parse_json_body("ip", none_on_error=True) == ip  # type:ignore[no-any-return]
+    return res.parse_json("ip", none_on_error=True) == ip  # type:ignore[no-any-return]

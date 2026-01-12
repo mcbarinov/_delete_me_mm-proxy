@@ -28,7 +28,7 @@ class Source(MongoModel[str]):
             schema = "socks5" if self.protocol == Protocol.SOCKS5 else "http"
             return f"{schema}://{self.username}:{self.password}@{ip}:{self.port}"
 
-    __collection__: str = "source"
+    __collection__ = "source"
     __indexes__ = ["created_at", "checked_at"]
 
     default: Default | None = None
@@ -84,6 +84,8 @@ class Proxy(MongoModel[ObjectId]):
     @classmethod
     def new(cls, source: str, url: str) -> Proxy:
         ip = urlparse(url).hostname
+        if ip is None:
+            raise ValueError(f"Invalid proxy URL (no hostname): {url}")
         protocol = Protocol.HTTP if url.startswith("http") else Protocol.SOCKS5
         return Proxy(id=ObjectId(), source=source, url=url, ip=ip, protocol=protocol)
 

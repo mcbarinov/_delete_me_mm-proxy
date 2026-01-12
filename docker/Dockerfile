@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.9
-ARG python_version=3.13.2
-ARG uv_version=0.6.9
+ARG python_version=3.14.2
+ARG uv_version=0.9.24
 
 FROM ghcr.io/astral-sh/uv:${uv_version} AS uv_builder
 FROM python:${python_version} AS builder
@@ -13,7 +13,6 @@ COPY --from=uv_builder /uv /usr/local/bin/
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
     UV_PYTHON_DOWNLOADS=never \
-    UV_PYTHON=python3.13 \
     UV_PROJECT_ENVIRONMENT=/app
 
 # Create a virtual environment

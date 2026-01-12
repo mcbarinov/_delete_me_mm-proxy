@@ -29,8 +29,9 @@ class Stats(BaseModel):
 logger = logging.getLogger(__name__)
 
 
-class SourceService(Service):
-    core: AppCore
+class SourceService(Service[AppCore]):
+    def configure_scheduler(self) -> None:
+        self.core.scheduler.add_task("source_check", 60, self.core.services.source.check_next)
 
     async def create(self, id: str, link: str | None = None) -> MongoInsertOneResult:
         return await self.core.db.source.insert_one(Source(id=id, link=link))
@@ -79,7 +80,7 @@ class SourceService(Service):
         if source.link and source.default:
             res = await http_request(source.link, timeout=10)
             if res.is_err():
-                logger.warning("Failed to fetch source link", extra={"link": source.link, "response": res.to_dict()})
+                logger.warning("Failed to fetch source link", extra={"link": source.link, "response": res.model_dump()})
                 return 0
             ip_addresses = parse_ipv4_addresses(res.body or "")
             new_urls = [source.default.url(item) for item in ip_addresses]

@@ -10,17 +10,15 @@ from app.server import jinja
 
 async def main() -> None:
     core = await Core.init(
-        core_config=config.core_config,
+        config=config.config,
         settings_cls=config.Settings,
         state_cls=config.State,
         db_cls=Db,
         service_registry_cls=ServiceRegistry,
-        lifespan_cls=config.AppCoreLifecycle,
     )
 
     await run(
         core=core,
-        server_config=config.server_config,
         telegram_handlers=telegram_bot.handlers,
         jinja_config_cls=jinja.AppJinjaConfig,
         host="0.0.0.0",  # noqa: S104 # nosec
