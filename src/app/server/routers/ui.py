@@ -7,7 +7,7 @@ from mm_std import parse_lines, replace_empty_dict_entries
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse, RedirectResponse
 
-from app.core.db import Protocol, ProxyType, Source, Status
+from app.core.db import Protocol, Source, Status
 from app.core.types import AppView
 
 router = APIRouter(include_in_schema=False)
@@ -69,7 +69,6 @@ class ActionCBV(AppView):
 
     class SetDefaultForm(BaseModel):
         protocol: Protocol
-        proxy_type: ProxyType
         username: str
         password: str
         port: int

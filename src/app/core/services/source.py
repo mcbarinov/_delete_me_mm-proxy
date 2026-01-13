@@ -13,7 +13,7 @@ from mm_std import utc_delta, utc_now
 from pydantic import BaseModel
 from pymongo.errors import BulkWriteError
 
-from app.core.db import Proxy, ProxyType, Source, Status
+from app.core.db import Proxy, Source, Status
 from app.core.types import AppCore
 
 
@@ -93,8 +93,7 @@ class SourceService(Service[AppCore]):
                 elif ep.ip:
                     urls.append(source.default.url(ep.ip, ep.port))
 
-        proxy_type = source.default.proxy_type if source.default else ProxyType.DIRECT
-        proxies = [Proxy.new(id, url, proxy_type) for url in urls]
+        proxies = [Proxy.new(id, url) for url in urls]
         if proxies:
             with contextlib.suppress(BulkWriteError):
                 await self.core.db.proxy.insert_many(proxies, ordered=False)

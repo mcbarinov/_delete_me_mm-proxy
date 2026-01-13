@@ -17,19 +17,12 @@ class Protocol(StrEnum):
     SOCKS5 = "socks5"
 
 
-@unique
-class ProxyType(StrEnum):
-    DIRECT = "direct"  # hostname in URL = real proxy IP (verified during check)
-    GATEWAY = "gateway"  # hostname in URL ≠ real IP (e.g., gateway.com:10001 → dynamic IP)
-
-
 class Source(MongoModel[str]):
     class Default(BaseModel):
         protocol: Protocol
         username: str
         password: str
         port: int
-        proxy_type: ProxyType = ProxyType.DIRECT
 
         def url(self, ip: str, port: int | None = None) -> str:
             schema = "socks5" if self.protocol == Protocol.SOCKS5 else "http"
@@ -62,12 +55,11 @@ class Status(StrEnum):
 
 class Proxy(MongoModel[ObjectId]):
     __collection__ = "proxy"
-    __indexes__ = ["!url", "proxy_ip", "source", "protocol", "status", "type", "created_at", "checked_at", "last_ok_at"]
+    __indexes__ = ["!url", "proxy_ip", "source", "protocol", "status", "created_at", "checked_at", "last_ok_at"]
 
     source: str  # source ID that provided this proxy
     url: str  # full proxy URL (e.g., socks5://user:pass@host:port)
     proxy_ip: str | None = None  # detected IP from check (may differ from hostname for gateway)
-    type: ProxyType = ProxyType.DIRECT  # direct = IP must match hostname, gateway = any IP allowed
     status: Status = Status.UNKNOWN
     protocol: Protocol
     created_at: datetime = Field(default_factory=utc_now)
@@ -88,6 +80,13 @@ class Proxy(MongoModel[ObjectId]):
         parsed = urlparse(self.url)
         return f"{parsed.hostname}:{parsed.port}"
 
+    @property
+    def gateway(self) -> bool | None:
+        """True=gateway, False=direct, None=unknown."""
+        if self.proxy_ip is None:
+            return None
+        return self.proxy_ip != urlparse(self.url).hostname
+
     def is_time_to_delete(self) -> bool:
         # delete me if it was ok last time 1 hour ago
         if self.last_ok_at and self.last_ok_at < utc_delta(hours=-1):
@@ -96,11 +95,11 @@ class Proxy(MongoModel[ObjectId]):
         return bool(self.last_ok_at is None and self.created_at < utc_delta(hours=-1))
 
     @classmethod
-    def new(cls, source: str, url: str, proxy_type: ProxyType = ProxyType.DIRECT) -> Proxy:
+    def new(cls, source: str, url: str) -> Proxy:
         if not urlparse(url).hostname:
             raise ValueError(f"Invalid proxy URL (no hostname): {url}")
         protocol = Protocol.HTTP if url.startswith("http") else Protocol.SOCKS5
-        return Proxy(id=ObjectId(), source=source, url=url, type=proxy_type, protocol=protocol)
+        return Proxy(id=ObjectId(), source=source, url=url, protocol=protocol)
 
 
 class Db(BaseDb):

@@ -78,10 +78,6 @@
               <sl-option value="http">http</sl-option>
               <sl-option value="socks5">socks5</sl-option>
             </sl-select>
-            <sl-select name="proxy_type" required value="{{ s.default and s.default.proxy_type or 'direct' }}" placeholder="proxy type">
-              <sl-option value="direct">direct</sl-option>
-              <sl-option value="gateway">gateway</sl-option>
-            </sl-select>
             <sl-input type="text" name="username" placeholder="username" value="{{ s.default.username }}"></sl-input>
             <sl-input type="text" name="password" placeholder="password" value="{{ s.default.password }}"></sl-input>
             <sl-input type="number" name="port" placeholder="port" value="{{ s.default.port }}" required></sl-input>

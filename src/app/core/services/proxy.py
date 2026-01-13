@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import logging
-from urllib.parse import urlparse
 
 import pydash
 from bson import ObjectId
@@ -11,7 +10,7 @@ from mm_http import http_request
 from mm_mongo import MongoUpdateResult
 from mm_std import utc_delta, utc_now
 
-from app.core.db import Protocol, Proxy, ProxyType, Status
+from app.core.db import Protocol, Proxy, Status
 from app.core.types import AppCore
 from app.core.utils import AsyncSlidingWindowCounter
 
@@ -42,7 +41,9 @@ class ProxyService(Service[AppCore]):
         logger.debug("check proxy", extra={"id": proxy.id, "url": proxy.url})
 
         response_ip = await get_proxy_response_ip(proxy.url, self.core.settings.proxy_check_timeout)
-        success, proxy_ip = self._validate_proxy_response(proxy, response_ip)
+        # Validate: must have response and not be our own IP (means proxy not working)
+        proxy_ip = response_ip if response_ip and response_ip != self.core.state.own_ip else None
+        success = proxy_ip is not None
 
         await self.counter.record_operation()
 
@@ -60,23 +61,6 @@ class ProxyService(Service[AppCore]):
             updated["deleted"] = True
 
         return updated
-
-    def _validate_proxy_response(self, proxy: Proxy, response_ip: str | None) -> tuple[bool, str | None]:
-        if not response_ip:
-            return False, None
-
-        # Protection: if response is our own IP — proxy is not working
-        if response_ip == self.core.state.own_ip:
-            return False, None
-
-        if proxy.type == ProxyType.DIRECT:
-            # For direct: verify IP matches hostname from URL
-            expected_ip = urlparse(proxy.url).hostname
-            if response_ip != expected_ip:
-                return False, None
-
-        # Gateway: any IP (except our own) = OK
-        return True, response_ip
 
     @async_synchronized
     async def check_next(self) -> None:
